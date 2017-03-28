@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Skeletal ONOS application component.
  */
+
 @Component(immediate = true)
 public class AppComponent {
 

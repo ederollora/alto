@@ -18,17 +18,19 @@ package me.ollora.thesis.alto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sun.org.apache.xpath.internal.SourceTree;
 import org.onosproject.rest.AbstractWebResource;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import static org.onlab.util.Tools.nullIsNotFound;
+import java.io.IOException;
 
 /**
- * Sample web resource.
+ * ALTO REST interface.
  */
 @Path("alto")
 public class AppWebResource extends AbstractWebResource {
@@ -52,7 +54,36 @@ public class AppWebResource extends AbstractWebResource {
         }
 
         return ok(json).build();
+    }
 
+    @POST
+    @Path("networkmap")
+    @Produces(AltoMediaType.APPLICATION_ALTO_NETWORKMAP)
+    public Response returnFilteredNetworkMap(String body) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        ReqFilteredNetworkMap filNetMap = mapper.readValue(body, ReqFilteredNetworkMap.class);
+
+        if(filNetMap.getPids() == null)
+            System.out.println("haha");
+
+        ALTOService altoService = get(ALTOService.class);
+
+        InfoResourceNetworkMap netMap = altoService.getNetworkMap();
+
+        netMap.filterPIDs(filNetMap);
+
+
+        String json = null;
+
+        try {
+            json = mapper.writeValueAsString(netMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return ok(json).build();
     }
 
     @GET

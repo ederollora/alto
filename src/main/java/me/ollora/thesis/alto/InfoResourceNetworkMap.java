@@ -9,9 +9,7 @@ import org.onosproject.net.device.DeviceService;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Created by s150924 on 3/10/17.
@@ -79,6 +77,41 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
     @Override
     public int hashCode() {
         return Objects.hash(getNetworkMap());
+    }
+
+    public void filterPIDs(ReqFilteredNetworkMap filNetMap){
+
+        if(filNetMap.getPids().size() > 0) {
+
+            Set<String> pidsToKeep = new HashSet<String>(filNetMap.getPids());
+
+            Set<String> pidsToRemove = this.getNetworkMap().getData().keySet();
+
+            pidsToRemove.removeAll(pidsToKeep);
+
+
+            for (String pid : pidsToRemove) {
+                this.getNetworkMap().getData().remove(pid);
+            }
+        }
+
+        if( filNetMap.getAddressTypes() != null &&
+                filNetMap.getAddressTypes().size() > 0){
+
+            for(Map.Entry<String, EndpointAddrGroup> entry : this.getNetworkMap().getData().entrySet()){
+
+                for(Map.Entry<String, ArrayList<String>> setOfIPs : entry.getValue().getEndGr().entrySet()){
+
+                    if(setOfIPs.getKey().equalsIgnoreCase(""))
+                        System.out.println();
+
+
+                }
+
+
+            }
+        }
+
     }
 
 

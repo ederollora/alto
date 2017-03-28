@@ -36,7 +36,17 @@ public class ALTOCommand extends AbstractShellCommand {
     @Option(name = "pids", aliases = {"-p", "--pids", "pids"},
             description = "Print PIDs and host IPs",
             required = false, multiValued = false)
-    private boolean printPIDs = false;
+    boolean printPIDs = false;
+
+    @Option(name = "cost", aliases = {"-c", "--costs", "cost"},
+            description = "Print Cost from pid to pid",
+            required = false, multiValued = false)
+    boolean printCosts = false;
+
+    @Option(name = "vtag", aliases = {"-v", "--vtag", "vtag"},
+            description = "Print the current Vtag",
+            required = false, multiValued = false)
+    boolean printVtags = false;
 
 
     @Override
@@ -49,11 +59,21 @@ public class ALTOCommand extends AbstractShellCommand {
             printPIDs(pids);
         }
 
+        if(printCosts){
+            Map<String, DstCosts> costs = altoService.getCostData();
+            printCosts(costs);
+        }
 
+        if(printVtags){
+            List<VersionTag> vtags = altoService.getAllVersionTags();
+            printVtags(vtags);
+        }
 
     }
 
     private void printPIDs(Map<PID, List<Host>> pids){
+
+        printBar();
 
         for(Map.Entry<PID, List<Host>> entry : pids.entrySet()){
 
@@ -67,8 +87,43 @@ public class ALTOCommand extends AbstractShellCommand {
                 }
             }
         }
+    }
 
+    private void printVtags(List<VersionTag> vtags){
 
+        printBar();
+        print("Latest "+vtags.size()+" version tags:");
+
+        int i = 0;
+
+        for(VersionTag tag : vtags){
+            i++;
+
+            if(i == vtags.size())
+                print(tag.getTag()+"   <-- Current");
+            else
+                print(tag.getTag());
+        }
+
+    }
+
+    private void printCosts(Map<String, DstCosts> costs){
+
+        printBar();
+
+        for(Map.Entry<String, DstCosts> cost : costs.entrySet()){
+
+            print("Source PID: "+cost.getKey());
+
+            for(Map.Entry<String, Integer> destcosts : cost.getValue().getDstCosts().entrySet()){
+                print("  -> Destination PID: "+destcosts.getKey()+" - Cost: "+destcosts.getValue().toString());
+            }
+        }
+    }
+
+    private void printBar(){
+
+        print("\n- - - - - - - - - - - - - - - - - -\n");
 
     }
 

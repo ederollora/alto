@@ -49,8 +49,8 @@ public class PID {
     }
 
     public PID(int id, String refDevice, Device pidRefSwitch){
-        String PID = "PID-";
-        this.pidName = PID+String.valueOf(id); //PID-1, PID-2 ....
+        String PID = "PID";
+        this.pidName = PID+String.valueOf(id); //PID1, PID2 ....
         this.refDevice = refDevice;
         this.pidRefSwitch = pidRefSwitch;
 

@@ -1,23 +1,19 @@
 package me.ollora.thesis.alto;
 
 import org.apache.felix.scr.annotations.*;
-import org.onosproject.net.Device;
 import org.onosproject.net.Host;
-import org.onosproject.net.device.DeviceEvent;
-import org.onosproject.net.device.DeviceListener;
+
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
 
-import org.onosproject.net.link.LinkEvent;
-import org.onosproject.net.link.LinkListener;
-import org.onosproject.net.link.LinkService;
 import org.onosproject.net.topology.TopologyEvent;
 import org.onosproject.net.topology.TopologyListener;
 import org.onosproject.net.topology.TopologyService;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,14 +38,9 @@ public class ALTOManager implements ALTOService{
     protected DeviceService deviceService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected LinkService linkService;
-
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected TopologyService topologyService;
 
     private HostListener hostListener = new InnerHostListener();
-    private DeviceListener deviceListener = new InnerDeviceListener();
-    private LinkListener linkListener = new InnerLinkListener();
     private TopologyListener topologyListener = new InnerTopologyListener();
 
     private InfoResourceNetworkMap infoResNetworkMap;
@@ -58,6 +49,8 @@ public class ALTOManager implements ALTOService{
     private int geninforesmap = 0;
     private int gencostresmap = 0;
 
+    private List<VersionTag> latestVtags = new ArrayList<>();
+
 
     @Activate
     public void activate() {
@@ -65,8 +58,6 @@ public class ALTOManager implements ALTOService{
         buildNetworkMap(); //It also builds the cost map
 
         hostService.addListener(hostListener);
-        //deviceService.addListener(deviceListener);
-        //linkService.addListener(linkListener);
         topologyService.addListener(topologyListener);
 
         log.info("Started Alto Service");
@@ -77,8 +68,6 @@ public class ALTOManager implements ALTOService{
     public void deactivate() {
 
         hostService.removeListener(hostListener);
-        //deviceService.removeListener(deviceListener);
-        //linkService.removeListener(linkListener);
         topologyService.removeListener(topologyListener);
 
         log.info("Stopped Alto Service");
@@ -94,11 +83,21 @@ public class ALTOManager implements ALTOService{
         return infoResCostMap;
     }
 
-
     @Override
     public Map<PID,List<Host>> getPIDs(){
         return infoResNetworkMap.getPIDs();
     }
+
+    @Override
+    public Map<String, DstCosts> getCostData() {
+        return infoResCostMap.getCostMap().getData();
+    }
+
+    @Override
+    public List<VersionTag> getAllVersionTags() {
+        return latestVtags;
+    }
+
 
     private class InnerHostListener implements HostListener {
 
@@ -125,7 +124,6 @@ public class ALTOManager implements ALTOService{
 
     private class InnerTopologyListener implements TopologyListener{
 
-
         @Override
         public void event(TopologyEvent topologyEvent) {
 
@@ -142,66 +140,6 @@ public class ALTOManager implements ALTOService{
         }
     }
 
-    private class InnerDeviceListener implements DeviceListener {
-
-        @Override
-        public void event(DeviceEvent deviceEvent) {
-
-            try {
-                switch (deviceEvent.type()) {
-                    case DEVICE_ADDED:
-                    case DEVICE_REMOVED:
-                        log.info("Rebuilding network map. Reason: "+deviceEvent.type().toString()+" -> "+deviceEvent.subject().id());
-                        //buildNetworkMap();
-                        break;
-                    case DEVICE_UPDATED:
-                        log.info("Rebuilding network map. Reason: DEVICE_UPDATED -> "+deviceEvent.subject().id());
-                        break;
-                    case DEVICE_SUSPENDED:
-                        log.info("Rebuilding network map. Reason: DEVICE_SUSPENDED -> "+deviceEvent.subject().id());
-                        break;
-                    case DEVICE_AVAILABILITY_CHANGED:
-                        log.info("Rebuilding network map. Reason: DEVICE_AVAILABILITY_CHANGED -> "+deviceEvent.subject().id());
-                        break;
-                    default:
-                        break;
-                }
-            } catch (Exception e) {
-                log.warn("Failed to process {}", deviceEvent, e);
-            }
-        }
-    }
-
-    private class InnerLinkListener implements LinkListener{
-
-        @Override
-        public void event(LinkEvent linkEvent) {
-
-            try {
-                switch (linkEvent.type()){
-                    case LINK_ADDED:
-                    case LINK_REMOVED:
-                        log.info("Rebuilding network map. Reason: "+
-                                linkEvent.type().toString()+
-                                " -> "+
-                                linkEvent.subject().src()+" <-> "+linkEvent.subject().dst());
-                        //buildNetworkMap();
-                        break;
-                    case LINK_UPDATED:
-                        log.info("Rebuilding network map. Reason: "+
-                                linkEvent.type().toString()+
-                                " -> "+
-                                linkEvent.subject().src()+" <-> "+linkEvent.subject().dst());
-                    default:
-                        break;
-                }
-
-            } catch (Exception e) {
-                log.warn("Failed to process {}", linkEvent, e);
-            }
-        }
-    }
-
     private void buildNetworkMap(){
 
         geninforesmap++;
@@ -211,6 +149,8 @@ public class ALTOManager implements ALTOService{
         Iterable<Host> hosts = hostService.getHosts();
 
         infoResNetworkMap = new InfoResourceNetworkMap(hosts, log, deviceService);
+
+        addVtagToList(infoResNetworkMap.VersionTag());
 
         buildCostMap();
 
@@ -229,4 +169,21 @@ public class ALTOManager implements ALTOService{
         );
     }
 
+    private void addVtagToList(VersionTag tag){
+
+        if(latestVtags.size() == 5){
+            shiftVtags();
+        }
+
+        latestVtags.add(tag);
+
+    }
+
+    private void shiftVtags(){
+
+        for(int i = 0; i < (latestVtags.size()-2); i++)
+            latestVtags.add(i, latestVtags.get(i+1));
+
+        latestVtags.remove(latestVtags.size()-1);
+    }
 }
