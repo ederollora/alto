@@ -14,7 +14,11 @@ import java.util.List;
         "dependent-vtags",
         "cost-type",
         "cost-types",
-        "default-alto-network-map"
+        "default-alto-network-map",
+        "code",
+        "syntax-error",
+        "field",
+        "value"
 })
 
 
@@ -38,10 +42,21 @@ public class ResponseMeta implements Serializable {
     @JsonProperty("default-alto-network-map")
     private String defaultAltoNetworkMap = null;
 
+    @JsonProperty("code")
+    private String code = null;
+
+    @JsonProperty("syntax-error")
+    private String syntaxError = null;
+
+    @JsonProperty("field")
+    private String field = null;
+
+    @JsonProperty("value") //Specifying this property requires field property to be specified too
+    private String value = null;
+
     public ResponseMeta(){
 
     }
-
 
     public ResponseMeta(String resourceId){
         this.vtag = new VersionTag(resourceId);
@@ -109,8 +124,47 @@ public class ResponseMeta implements Serializable {
         this.costType = costType;
     }
 
-    public void addDependentVtag(VersionTag dependentVtag){
+    @JsonProperty("code")
+    public String getCode() {
+        return code;
+    }
 
+    @JsonProperty("code")
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    @JsonProperty("syntax-error")
+    public String getSyntaxError() {
+        return syntaxError;
+    }
+
+    @JsonProperty("syntax-error")
+    public void setSyntaxError(String syntaxError) {
+        this.syntaxError = syntaxError;
+    }
+
+    @JsonProperty("field")
+    public String getField() {
+        return field;
+    }
+
+    @JsonProperty("field")
+    public void setField(String field) {
+        this.field = field;
+    }
+
+    @JsonProperty("value")
+    public String getValue() {
+        return value;
+    }
+
+    @JsonProperty("value")
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public void addDependentVtag(VersionTag dependentVtag){
         this.dependentVersionTags.add(dependentVtag);
 
     }

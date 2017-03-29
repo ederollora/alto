@@ -13,7 +13,7 @@ import java.util.*;
 
 /**
  * Created by s150924 on 3/10/17.
- *
+ *  *
  */
 
 
@@ -28,12 +28,12 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
     private static String defaultResourceId = "default-network-map";
 
     @JsonProperty("network-map")
-    private NetworkMapData networkMap;
+    private NetworkMapData networkMap = null;
 
     public InfoResourceNetworkMap() {
 
         this.networkMap = new NetworkMapData();
-        this.getMeta().setVersionTag(new VersionTag(defaultResourceId));
+        //this.getMeta().setVersionTag(new VersionTag(defaultResourceId));
     }
 
     public InfoResourceNetworkMap(NetworkMapData networkMap) {
@@ -108,12 +108,9 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
 
                 }
 
-
             }
         }
 
     }
-
-
 
 }
