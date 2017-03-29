@@ -17,6 +17,15 @@ public class ALTOMediaType extends MediaType{
     public final static MediaType APPLICATION_ALTO_NETWORKMAP_TYPE = new MediaType("application", "alto-networkmap+json");
 
     /**
+     * A {@code String} constant representing {@value #APPLICATION_ALTO_NETWORKMAPFILTER} media type.
+     */
+    public final static String APPLICATION_ALTO_NETWORKMAPFILTER = "application/alto-networkmapfilter+json";
+    /**
+     * A {@link MediaType} constant representing {@value #APPLICATION_ALTO_NETWORKMAPFILTER} media type.
+     */
+    public final static MediaType APPLICATION_ALTO_NETWORKMAPFILTER_TYPE = new MediaType("application", "alto-networkmapfilter+json");
+
+    /**
      * A {@code String} constant representing {@value #APPLICATION_ALTO_COSTMAP} media type.
      */
     public final static String APPLICATION_ALTO_COSTMAP = "application/alto-costmap+json";

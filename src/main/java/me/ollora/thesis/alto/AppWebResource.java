@@ -15,7 +15,10 @@
  */
 package me.ollora.thesis.alto;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.onosproject.rest.AbstractWebResource;
 
@@ -54,34 +57,56 @@ public class AppWebResource extends AbstractWebResource {
     //filtered Network Map
     @POST
     @Path("networkmap")
+    @Consumes(ALTOMediaType.APPLICATION_ALTO_NETWORKMAPFILTER)
     @Produces({ALTOMediaType.APPLICATION_ALTO_NETWORKMAP,
                ALTOMediaType.APPLICATION_ALTO_ERROR})
     public Response returnFilteredNetworkMap(String body) throws IOException {
 
         ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
 
         ReqFilteredNetworkMap filNetMap = null;
+        InfoResourceNetworkMap netMap = null;
 
-        InfoResourceNetworkMap netMap= null;
-
-        try{
+        try {
             filNetMap = mapper.readValue(body, ReqFilteredNetworkMap.class);
+        }
+        catch (JsonParseException | JsonMappingException syntaxEx){
+
+            //Either json structures is incorrect or field not present in POJO
+
+            ALTOErrorResponse errResponse = new ALTOErrorResponse();
+
+            errResponse.geteMeta().setCode(ALTOErrorCodes.E_SYNTAX);
+            errResponse.geteMeta().setSyntaxError(
+                    "Col: "+syntaxEx.getLocation().getColumnNr()+". "+
+                    "Line: "+syntaxEx.getLocation().getLineNr()+". "+
+                    "Offset: "+syntaxEx.getLocation().getCharOffset()+"."
+            );
+
+            return ok(errResponse.toJSON())
+                    .status(400)
+                    .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
+                    .build();
+
         }
         catch (Exception e) {
             e.printStackTrace();
+        }
 
-            ALTOErrorCodes eCode = new ALTOErrorCodes();
-            eCode.setCode(ALTOErrorCodes.E_SYNTAX);
+        if(filNetMap.getPids() == null){
 
-            String message = null;
-            //buildErrorMessage(eCode);
-            return ok(message)
+            ALTOErrorResponse errResponse = new ALTOErrorResponse();
+
+            errResponse.geteMeta().setCode(ALTOErrorCodes.E_MISSING_FIELD);
+            errResponse.geteMeta().setField("pids");
+
+            return ok(errResponse.toJSON())
+                    .status(400)
                     .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
                     .build();
         }
-
-        if(filNetMap.getPids() == null)
-            System.out.println("haha");
 
         ALTOService altoService = get(ALTOService.class);
 
@@ -121,39 +146,6 @@ public class AppWebResource extends AbstractWebResource {
         }
 
         return ok(json).build();
-
-    }
-
-    private String buildErrorMessage(ALTOErrorCodes code, String syntaxError,
-                                       String field, String value){
-
-        ResponseMeta rm = new ResponseMeta();
-
-        ObjectMapper mapper = new ObjectMapper();
-
-       if(code != null) {
-           rm.setCode(code.toString());
-           if(syntaxError != null && !syntaxError.isEmpty())
-               rm.setSyntaxError(syntaxError);
-       }
-
-
-       if(field != null && !field.isEmpty()) {
-           rm.setField(field);
-           if (value != null && !value.isEmpty())
-               rm.setValue(value);
-       }
-
-        String json = null;
-
-        try {
-            json = mapper.writeValueAsString(rm);
-        } catch (JsonProcessingException exc) {
-            exc.printStackTrace();
-        }
-
-        return "";
-
     }
 
 }

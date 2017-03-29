@@ -25,11 +25,6 @@ public class ResponseEntityBase implements Serializable {
     }
 
 
-    public ResponseEntityBase(VersionTag vtag){
-
-
-    }
-
     @JsonProperty("meta")
     public ResponseMeta getMeta() {
         return meta;
