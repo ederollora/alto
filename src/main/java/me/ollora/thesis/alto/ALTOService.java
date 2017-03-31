@@ -16,8 +16,6 @@ public interface ALTOService {
 
     Map<PID,List<Host>> getPIDs();
 
-    Map<String, DstCosts> getCostData();
-
     List<VersionTag> getAllVersionTags();
 
 }

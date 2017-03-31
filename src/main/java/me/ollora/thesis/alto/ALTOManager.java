@@ -14,6 +14,7 @@ import org.onosproject.net.topology.TopologyService;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ALTOManager implements ALTOService{
 
     private final Logger log = getLogger(getClass());
-
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected HostService hostService;
@@ -51,17 +51,21 @@ public class ALTOManager implements ALTOService{
 
     private List<VersionTag> latestVtags = new ArrayList<>();
 
+    private List<CostType> costTypes = new ArrayList<>();
+
+    private Map<CostType, CostMapData> costMaps = new HashMap<>();
 
     @Activate
     public void activate() {
 
-        buildNetworkMap(); //It also builds the cost map
+        costTypes.add(new CostType("numerical", "hopcount"));
+
+        buildMaps(); //It also builds the cost map
 
         hostService.addListener(hostListener);
         topologyService.addListener(topologyListener);
 
         log.info("Started Alto Service");
-
     }
 
     @Deactivate
@@ -89,15 +93,67 @@ public class ALTOManager implements ALTOService{
     }
 
     @Override
-    public Map<String, DstCosts> getCostData() {
-        return infoResCostMap.getCostMap().getData();
-    }
-
-    @Override
     public List<VersionTag> getAllVersionTags() {
         return latestVtags;
     }
 
+    private void buildNetworkMap(){
+
+        geninforesmap++;
+
+        log.info("Build Network Map number: "+String.valueOf(geninforesmap));
+
+        Iterable<Host> hosts = hostService.getHosts();
+
+        infoResNetworkMap = new InfoResourceNetworkMap(hosts, log, deviceService);
+
+        addVtagToList(infoResNetworkMap.VersionTag());
+
+    }
+
+    private void buildCostMap(){
+
+        gencostresmap++;
+
+        log.info("Build Cost Map number: "+String.valueOf(gencostresmap));
+
+        for (CostType cType : costTypes)
+
+            if(cType.equals(SupportedCostTypes.NUM_HOP_COUNT))
+                costMaps.put(cType, CostMapData.numHopCountCostMap(
+                    infoResNetworkMap.getPIDs(),
+                    log,
+                    topologyService));
+
+        infoResCostMap = new InfoResourceCostMap(
+                infoResNetworkMap.getMeta().getVersionTag()
+
+        );
+    }
+
+    private void buildMaps(){
+
+        buildNetworkMap();
+        buildCostMap();
+    }
+
+    private void addVtagToList(VersionTag tag){
+
+        if(latestVtags.size() == 5){
+            shiftVtags();
+        }
+
+        latestVtags.add(tag);
+
+    }
+
+    private void shiftVtags(){
+
+        for(int i = 0; i < (latestVtags.size()-2); i++)
+            latestVtags.add(i, latestVtags.get(i+1));
+
+        latestVtags.remove(latestVtags.size()-1);
+    }
 
     private class InnerHostListener implements HostListener {
 
@@ -140,50 +196,4 @@ public class ALTOManager implements ALTOService{
         }
     }
 
-    private void buildNetworkMap(){
-
-        geninforesmap++;
-
-        log.info("Build Network Map number: "+String.valueOf(geninforesmap));
-
-        Iterable<Host> hosts = hostService.getHosts();
-
-        infoResNetworkMap = new InfoResourceNetworkMap(hosts, log, deviceService);
-
-        addVtagToList(infoResNetworkMap.VersionTag());
-
-        buildCostMap();
-
-    }
-
-    private void buildCostMap(){
-
-        gencostresmap++;
-
-        log.info("Build Cost Map number: "+String.valueOf(gencostresmap));
-
-        infoResCostMap = new InfoResourceCostMap(
-                infoResNetworkMap,
-                log,
-                topologyService
-        );
-    }
-
-    private void addVtagToList(VersionTag tag){
-
-        if(latestVtags.size() == 5){
-            shiftVtags();
-        }
-
-        latestVtags.add(tag);
-
-    }
-
-    private void shiftVtags(){
-
-        for(int i = 0; i < (latestVtags.size()-2); i++)
-            latestVtags.add(i, latestVtags.get(i+1));
-
-        latestVtags.remove(latestVtags.size()-1);
-    }
 }

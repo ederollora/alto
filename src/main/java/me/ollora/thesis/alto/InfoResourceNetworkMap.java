@@ -79,7 +79,7 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
         return Objects.hash(getNetworkMap());
     }
 
-    public void filterPIDs(ReqFilteredNetworkMap filNetMap){
+    public void filterMap(ReqFilteredNetworkMap filNetMap){
 
         if(filNetMap.getPids().size() > 0) {
 

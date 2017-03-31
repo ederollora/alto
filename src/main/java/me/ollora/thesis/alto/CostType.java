@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public class CostType implements Serializable {
 
+
+
     @JsonProperty("cost-metric")
     private String costMetric = null;
 
@@ -22,19 +24,9 @@ public class CostType implements Serializable {
 
     }
 
-    public CostType(String costMetric, String costMode){
-        this.setCostMetric(costMetric);
+    public CostType(String costMode, String costMetric){
         this.setCostMode(costMode);
-    }
-
-    @JsonProperty("cost-metric")
-    public String getCostMetric() {
-        return costMetric;
-    }
-
-    @JsonProperty("cost-metric")
-    public void setCostMetric(String costMetric) {
-        this.costMetric = costMetric;
+        this.setCostMetric(costMetric);
     }
 
     @JsonProperty("cost-mode")
@@ -47,14 +39,43 @@ public class CostType implements Serializable {
         this.costMode = costMode;
     }
 
+    @JsonProperty("cost-metric")
+    public String getCostMetric() {
+        return costMetric;
+    }
+
+    @JsonProperty("cost-metric")
+    public void setCostMetric(String costMetric) {
+        this.costMetric = costMetric;
+    }
+
+
     @JsonIgnore
     public String getDescription() {
         return description;
     }
+
     @JsonIgnore
     public void setDescription(String description) {
         this.description = description;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        CostType costType = (CostType) o;
+
+        if (!costMode.equals(costType.costMode)) return false;
+        return costMetric.equals(costType.costMetric);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = costMetric.hashCode();
+        result = 31 * result + costMode.hashCode();
+        return result;
+    }
 }

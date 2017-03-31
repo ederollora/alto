@@ -35,11 +35,20 @@ public class ALTOMediaType extends MediaType{
     public final static MediaType APPLICATION_ALTO_COSTMAP_TYPE = new MediaType("application", "alto-costmap+json");
 
     /**
-     * A {@code String} constant representing {@value #APPLICATION_ALTO_COSTMAP} media type.
+     * A {@code String} constant representing {@value #APPLICATION_ALTO_COSTMAPFILTER} media type.
+     */
+    public final static String APPLICATION_ALTO_COSTMAPFILTER = "application/alto-costmapfilter+json";
+    /**
+     * A {@link MediaType} constant representing {@value #APPLICATION_ALTO_COSTMAPFILTER} media type.
+     */
+    public final static MediaType APPLICATION_ALTO_COSTMAPFILTER_TYPE = new MediaType("application", "alto-costmapfilter+json");
+
+    /**
+     * A {@code String} constant representing {@value #APPLICATION_ALTO_ERROR} media type.
      */
     public final static String APPLICATION_ALTO_ERROR = "application/alto-error+json";
     /**
-     * A {@link MediaType} constant representing {@value #APPLICATION_ALTO_COSTMAP} media type.
+     * A {@link MediaType} constant representing {@value #APPLICATION_ALTO_ERROR} media type.
      */
     public final static MediaType APPLICATION_ALTO_ERROR_TYPE = new MediaType("application", "alto-error+json");
 
