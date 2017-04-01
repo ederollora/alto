@@ -34,7 +34,7 @@ import java.util.TreeMap;
 /**
  * Sample Apache Karaf CLI command
  */
-@Command(scope = "alto", name = "alto-vtags",
+@Command(scope = "onos", name = "alto-vtags",
          description = "5 last used VersionTags")
 public class ALTOCommandVTags extends AbstractShellCommand {
 

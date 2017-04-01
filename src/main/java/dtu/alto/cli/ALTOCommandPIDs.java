@@ -16,7 +16,7 @@ import java.util.TreeMap;
  * Created by s150924 on 3/31/17.
  */
 
-@Command(scope = "alto", name = "alto-pids",
+@Command(scope = "onos", name = "alto-pids",
         description = "List endpoints per PIDs")
 public class ALTOCommandPIDs extends AbstractShellCommand {
 

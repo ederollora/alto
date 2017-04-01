@@ -21,7 +21,7 @@ public class ResponseEntityBase implements Serializable {
     }
 
     public ResponseEntityBase(ResponseMeta meta) {
-        this.meta = meta;
+        this.meta = new ResponseMeta(meta);
     }
 
 

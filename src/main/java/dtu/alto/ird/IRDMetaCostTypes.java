@@ -3,6 +3,7 @@ package dtu.alto.ird;
 import dtu.alto.cost.CostType;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,6 +17,13 @@ public class IRDMetaCostTypes implements Serializable {
 
 
     }
+
+    public IRDMetaCostTypes(IRDMetaCostTypes irdMetaCostTypes){
+        this.costTypes = new HashMap<String, CostType>(irdMetaCostTypes.getCostTypes());
+
+    }
+
+
 
     public Map<String, CostType> getCostTypes() {
         return costTypes;

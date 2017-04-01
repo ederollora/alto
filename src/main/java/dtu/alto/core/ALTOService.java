@@ -22,6 +22,8 @@ public interface ALTOService {
 
     List<VersionTag> getAllVersionTags();
 
+    void rebuildMaps();
+
 }
 
 

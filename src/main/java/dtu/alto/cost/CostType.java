@@ -27,6 +27,11 @@ public class CostType implements Serializable {
         this.setCostMetric(costMetric);
     }
 
+    public CostType(CostType cType){
+        this(cType.getCostMode(), cType.getCostMetric());
+
+    }
+
     @JsonProperty("cost-mode")
     public String getCostMode() {
         return costMode;

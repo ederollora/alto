@@ -103,6 +103,11 @@ public class ALTOManager implements ALTOService {
         return latestVtags;
     }
 
+    @Override
+    public void rebuildMaps() {
+        buildMaps();
+    }
+
     private void buildNetworkMap(){
 
         geninforesmap++;
@@ -130,12 +135,15 @@ public class ALTOManager implements ALTOService {
 
         for (CostType cType : costTypes) {
             if (cType.equals(SupportedCostTypes.NUM_HOP_COUNT)) {
-                infoResCostMap.getSetOfCostMaps().put(
-                        cType,
-                        CostMapData.numHopCountCostMap(
-                                infoResNetworkMap.getPIDs(),
-                                log,
-                                topologyService)
+
+                Map<CostType, CostMapData> costSet = infoResCostMap.getSetOfCostMaps();
+
+                costSet.put(
+                    cType,
+                    CostMapData.numHopCountCostMap(
+                            infoResNetworkMap.getPIDs(),
+                            log,
+                            topologyService)
                 );
             }
         }
@@ -205,6 +213,12 @@ public class ALTOManager implements ALTOService {
 
             }
         }
+    }
+
+    private void configureAltoServer(){
+
+
+
     }
 
 }

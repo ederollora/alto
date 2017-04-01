@@ -13,11 +13,8 @@ import java.util.*;
 
 public class DstCosts implements Serializable {
 
-
     SortedMap<String, Integer> dstCosts = new TreeMap<>();
 
-    @JsonIgnore
-    private Map<String, Integer> unorderedData = null;
 
     public DstCosts(){
         dstCosts = new TreeMap<>();

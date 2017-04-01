@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import dtu.alto.base.ResponseEntityBase;
+import dtu.alto.base.ResponseMeta;
 import dtu.alto.base.VersionTag;
 import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
@@ -39,7 +40,6 @@ public class InfoResourceCostMap extends ResponseEntityBase {
 
     private List<String> supportedOperators = Arrays.asList("gt", "lt", "ge", "le", "eq");
 
-
     @JsonProperty("cost-map")
     private CostMapData costMap = null;
 
@@ -57,6 +57,23 @@ public class InfoResourceCostMap extends ResponseEntityBase {
         this();
         this.getMeta().setDependentVersionTags(new ArrayList<>());
         this.getMeta().getDependentVersionTags().add(vTag);
+    }
+
+    public InfoResourceCostMap(ResponseMeta meta,
+                               CostMapData costData,
+                               Map<CostType, CostMapData> setOfData){
+
+        super(meta);
+        this.costMap = new CostMapData(costData);
+        this.setOfCostMaps = new HashMap<>(setOfData);
+    }
+
+
+    public InfoResourceCostMap newInstance(){
+        // new copy, not a reference
+        return new InfoResourceCostMap(
+                this.getMeta(), this.getCostMap(), this.getSetOfCostMaps()
+        );
     }
 
     @JsonProperty("cost-map")
@@ -81,30 +98,33 @@ public class InfoResourceCostMap extends ResponseEntityBase {
 
     public void filterMap(ReqFilteredCostMap filCostMap){
 
+        // cost type filtering
         if(filCostMap.getCostType() != null)
             this.setCostMap(this.getSetOfCostMaps().get(filCostMap.getCostType()));
 
+        // source/destination pid filtering
         if(filCostMap.getPids() != null){
 
             PIDFilter filter = filCostMap.getPids();
 
             //remove unknown source & destination PIDs
             // Should use a PID List instead of cost keys...
-            filter.getSrcs().retainAll(this.getCostMap().getData().keySet());
-            filter.getDsts().retainAll(this.getCostMap().getData().keySet());
+            Set<String> existingPIDs = this.getCostMap().getData().keySet();
 
-
-            if(filter.getSrcs() != null && filter.getSrcs().size() > 0)
+            if(filter.getSrcs() != null && filter.getSrcs().size() > 0) {
+                filter.getSrcs().retainAll(existingPIDs);
                 this.getCostMap().getData().keySet().retainAll(filter.getSrcs());
-
+            }
 
 
             if(filter.getDsts() != null && filter.getDsts().size() > 0){
+                filter.getDsts().retainAll(existingPIDs);
                 for(Map.Entry<String, DstCosts> pair : this.getCostMap().getData().entrySet())
                     pair.getValue().getDstCosts().keySet().retainAll(filter.getDsts());
             }
         }
 
+        // constraint filtering
         if(filCostMap.getConstraints() != null
                 && filCostMap.getConstraints().size() > 0){
 
@@ -126,14 +146,15 @@ public class InfoResourceCostMap extends ResponseEntityBase {
     private boolean fulfillsConstraints(List<String> constraints, int value){
 
         String operator, target;
-        Float fOperator;
+        double doubleCost = new Double(value).doubleValue();
+        double fOperator;
 
         for(String constraint : constraints){
 
             String[] entities = constraint.trim().split("\\s+");
 
             if(entities.length != 2)
-                return false; //maybe continue;?
+                return false; //maybe continue or false;?
 
             operator = entities[OPERATOR_POSITION].trim();
             target = entities[TARGET_POSITION].trim();
@@ -142,22 +163,20 @@ public class InfoResourceCostMap extends ResponseEntityBase {
                 return false; //maybe continue;?
 
             try{
-                fOperator = Float.parseFloat(target);
-            }catch (NumberFormatException e){
+                fOperator = Double.parseDouble(target);
+            }catch (Exception ex){
                 //instead of try catch, you can use a regexp
                 return false; //maybe continue;?
             }
 
-            if(operator.equals(GREATER_THAN))
-                if(!(value > fOperator)) return false;
-            if(operator.equals(LOWER_THAN))
-                if(!(value < fOperator)) return false;
-            if(operator.equals(GREATER_OR_EQUAL))
-                if(!(value >= fOperator)) return false;
-            if(operator.equals(LOWER_OR_EQUAL))
-                if(!(value <= fOperator)) return false;
-            if(operator.equals(EQUAL))
-                if(!(value == fOperator)) return false;
+
+            int comparison = Double.compare(doubleCost,fOperator);
+
+            if(operator.equals(GREATER_THAN) && !(comparison > 0)) return false;
+            if(operator.equals(LOWER_THAN) && !(comparison < 0)) return false;
+            if(operator.equals(GREATER_OR_EQUAL) && (comparison < 0)) return false;
+            if(operator.equals(LOWER_OR_EQUAL) && (comparison > 0)) return false;
+            if(operator.equals(EQUAL) && !(comparison == 0)) return false;
 
         }
 

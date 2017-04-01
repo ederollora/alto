@@ -25,12 +25,6 @@ public class ReqFilteredCostMap {
 
     }
 
-    public ReqFilteredCostMap(CostType costType, List<String> constraints, PIDFilter pids) {
-        this.costType = costType;
-        this.constraints = constraints;
-        this.pids = pids;
-    }
-
     @JsonProperty("cost-type")
     public CostType getCostType() {
         return costType;

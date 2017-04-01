@@ -37,15 +37,19 @@ public class VersionTag implements Serializable {
             this.tag = UUID.randomUUID().toString().replaceAll("-", "");
     }
 
-    public VersionTag(String resourceId, String tag) throws Exception {
-
-
+    public VersionTag(String resourceId, String tag){
         this.resourceId = resourceId;
 
         if(!this.tagIsValid(tag))
             this.tag = UUID.randomUUID().toString().replaceAll("-", "");
         else
             this.tag = tag;
+    }
+
+    public VersionTag(VersionTag vtag){
+
+        this(vtag.resourceId, vtag.tag);
+
     }
 
 
@@ -85,7 +89,7 @@ public class VersionTag implements Serializable {
             if (c < 0x0021 || c > 0x007E)
                 return false;
         }
-        // If we reach here the tag should be valid according to the standard
+        // If we reach here the tag should be valid according to the RFC
         return true;
     }
 

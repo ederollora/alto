@@ -67,8 +67,6 @@ public class AppWebResource extends AbstractWebResource {
         return ok(json).build();
     }
 
-    //filtered Network Map
-
     @POST
     @Path("networkmap/filtered")
     @Consumes(ALTOMediaType.APPLICATION_ALTO_NETWORKMAPFILTER)
@@ -81,7 +79,7 @@ public class AppWebResource extends AbstractWebResource {
 
 
         ReqFilteredNetworkMap filNetMap = null;
-        InfoResourceNetworkMap netMap = null;
+        InfoResourceNetworkMap netMap;
 
         try {
             filNetMap = mapper.readValue(body, ReqFilteredNetworkMap.class);
@@ -124,7 +122,7 @@ public class AppWebResource extends AbstractWebResource {
 
         ALTOService altoService = get(ALTOService.class);
 
-        netMap = altoService.getNetworkMap();
+        netMap = new InfoResourceNetworkMap(altoService.getNetworkMap());
 
         netMap.filterMap(filNetMap);
 
@@ -198,11 +196,16 @@ public class AppWebResource extends AbstractWebResource {
             e.printStackTrace();
         }
 
+
+
+        Response.ResponseBuilder rp = ok(json);
+
+
         return ok(json).build();
     }
 
     @POST
-    @Path("costmap  /filtered")
+    @Path("costmap/filtered")
     @Consumes(ALTOMediaType.APPLICATION_ALTO_COSTMAPFILTER)
     @Produces({ALTOMediaType.APPLICATION_ALTO_COSTMAP,
             ALTOMediaType.APPLICATION_ALTO_ERROR})
@@ -227,9 +230,10 @@ public class AppWebResource extends AbstractWebResource {
 
             errResponse.geteMeta().setCode(ALTOErrorCodes.E_SYNTAX);
             errResponse.geteMeta().setSyntaxError(
-                    "Column: "+syntaxEx.getLocation().getColumnNr()+". "+
-                    "Line: "+syntaxEx.getLocation().getLineNr()+". "+
-                    "Offset: "+syntaxEx.getLocation().getCharOffset()+"."
+                    "Column: "+syntaxEx.getLocation().getColumnNr()+". \n"+
+                    "Line: "+syntaxEx.getLocation().getLineNr()+". \n"+
+                    "Offset: "+syntaxEx.getLocation().getCharOffset()+". \n"+
+                    "PositionCharacter: "+body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
             );
 
             return ok(errResponse.toJSON())
@@ -242,7 +246,7 @@ public class AppWebResource extends AbstractWebResource {
             e.printStackTrace();
         }
 
-        if(filter.getCostType() == null){
+        if(filter != null || filter.getCostType() == null){
 
             ALTOErrorResponse errResponse = new ALTOErrorResponse();
 
@@ -257,7 +261,7 @@ public class AppWebResource extends AbstractWebResource {
 
         ALTOService altoService = get(ALTOService.class);
 
-        costMap = altoService.getCostMap();
+        costMap = altoService.getCostMap().newInstance();
 
         costMap.filterMap(filter);
 
@@ -270,10 +274,8 @@ public class AppWebResource extends AbstractWebResource {
         }
 
         return ok(json)
-                .type(ALTOMediaType.APPLICATION_ALTO_NETWORKMAP)
+                .type(ALTOMediaType.APPLICATION_ALTO_COSTMAP)
                 .build();
     }
-
-
 
 }

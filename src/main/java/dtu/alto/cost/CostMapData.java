@@ -20,24 +20,13 @@ public class CostMapData implements Serializable{
 
     SortedMap<String, DstCosts> data = new TreeMap<String, DstCosts>();
 
-    @JsonIgnore
-    private Map<String, DstCosts> unorderedData = null;
 
     public CostMapData(){
         this.data = new TreeMap<>();
     }
 
-    public CostMapData(SortedMap<String, DstCosts> data) {
-        this.data = data;
-    }
-
-    public CostMapData(SortedMap<PID, List<Host>> pidList, Logger log,
-                       TopologyService topoServ, CostType costType){
-        this();
-
-        if(costType.equals(SupportedCostTypes.NUM_HOP_COUNT))
-            this.numHopCountCostMap(pidList, log, topoServ);
-
+    public CostMapData(CostMapData costData){
+        this.data = new TreeMap<>(costData.getData());
     }
 
 
@@ -80,7 +69,6 @@ public class CostMapData implements Serializable{
                         }
                     }
                     cmd.addCostToPID(sourcePID.getPidName(), destPID.getPidName(), (int)cost);
-
                 }else{
                     cmd.addCostToPID(sourcePID.getPidName(), destPID.getPidName(), 1);
                 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import dtu.alto.base.EndpointAddrGroup;
 import dtu.alto.base.ResponseEntityBase;
+import dtu.alto.base.ResponseMeta;
 import dtu.alto.base.VersionTag;
 import dtu.alto.net.NetworkMapData;
 import dtu.alto.pid.PID;
@@ -36,14 +37,21 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
     @JsonProperty("network-map")
     private NetworkMapData networkMap = null;
 
+
     public InfoResourceNetworkMap() {
 
-        this.networkMap = new NetworkMapData();
-        //this.getMeta().setVersionTag(new VersionTag(defaultResourceId));
     }
 
-    public InfoResourceNetworkMap(NetworkMapData networkMap) {
-        this.networkMap = networkMap;
+
+    public InfoResourceNetworkMap(ResponseMeta rMeta, NetworkMapData nData) {
+
+        super(rMeta);
+        this.networkMap = new NetworkMapData(nData);
+    }
+
+
+    public InfoResourceNetworkMap(InfoResourceNetworkMap irnm) {
+        this(irnm.getMeta(), irnm.getNetworkMap());
     }
 
     public InfoResourceNetworkMap(Iterable<Host> hosts,
@@ -86,38 +94,56 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
         return Objects.hash(getNetworkMap());
     }
 
-    public void filterMap(ReqFilteredNetworkMap filNetMap){
-
-        if(filNetMap.getPids().size() > 0) {
-
-            Set<String> pidsToKeep = new HashSet<String>(filNetMap.getPids());
-
-            Set<String> pidsToRemove = this.getNetworkMap().getData().keySet();
-
-            pidsToRemove.removeAll(pidsToKeep);
-
-
-            for (String pid : pidsToRemove) {
-                this.getNetworkMap().getData().remove(pid);
-            }
+    @Override
+    public Object clone(){
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
         }
 
-        if( filNetMap.getAddressTypes() != null &&
-                filNetMap.getAddressTypes().size() > 0){
+        return null;
+    }
 
+    public void filterMap(ReqFilteredNetworkMap filNetMap){
+
+        Map<String, PID> pids = this.networkMap.getPids();
+
+        if(pids != null &&
+                pids.keySet().size() > 0 &&
+                    filNetMap.getPids().size() > 0){
+
+            Set<String> pidsToKeep = new HashSet<>(filNetMap.getPids());
+
+            Set<String> pidsToRemove = new HashSet<>(this.getNetworkMap().getData().keySet());
+
+            for(String pidsKeep : pidsToKeep)
+                if(pidsToRemove.contains(pidsKeep)) pidsToRemove.remove(pidsKeep);
+
+            Map<String, EndpointAddrGroup> data = this.getNetworkMap().getData();
+
+            for (String pid : pidsToRemove)
+                if(data.containsKey(pid)) data.remove(pid);
+        }
+
+        if(filNetMap.getAddressTypes() != null){
+            //filNetMap.getAddressTypes().size() > 0
             for(Map.Entry<String, EndpointAddrGroup> entry : this.getNetworkMap().getData().entrySet()){
 
                 for(Map.Entry<String, ArrayList<String>> setOfIPs : entry.getValue().getEndGr().entrySet()){
 
                     if(setOfIPs.getKey().equalsIgnoreCase(""))
                         System.out.println();
-
-
                 }
-
             }
         }
+    }
 
+    public InfoResourceNetworkMap newInstance(){
+        // new copy, not a reference
+        return new InfoResourceNetworkMap(
+                this.getMeta(), this.getNetworkMap()
+        );
     }
 
 }

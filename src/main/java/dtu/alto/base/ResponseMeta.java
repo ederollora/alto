@@ -8,6 +8,8 @@ import dtu.alto.cost.CostType;
 import dtu.alto.ird.IRDMetaCostTypes;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -57,6 +59,25 @@ public class ResponseMeta implements Serializable {
     public ResponseMeta(String resourceId, String vtag){
         this.vtag.setResourceId(resourceId);
         this.vtag.setTag(vtag);
+
+    }
+
+    public ResponseMeta(ResponseMeta rMeta){
+
+        if(rMeta.getVersionTag() != null)
+            this.vtag = new VersionTag(rMeta.getVersionTag());
+
+        if(rMeta.getDependentVersionTags() != null)
+            this.dependentVersionTags = new ArrayList(Arrays.asList(rMeta.getDependentVersionTags()));
+
+        if(rMeta.getCostType() != null)
+            this.costType = new CostType(rMeta.getCostType());
+
+        if(rMeta.costTypes != null)
+            this.costTypes = new IRDMetaCostTypes(rMeta.getCostTypes());
+
+        if(rMeta.getDefaultAltoNetworkMap() != null)
+            this.defaultAltoNetworkMap = new String(rMeta.getDefaultAltoNetworkMap());
 
     }
 

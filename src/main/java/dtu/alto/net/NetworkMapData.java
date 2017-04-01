@@ -31,7 +31,7 @@ public class NetworkMapData implements Serializable {
     public NetworkMapData(){
 
         data = new LinkedHashMap<>();
-        pids = new HashMap<>();
+        pids = new LinkedHashMap<>();
         pidList = new LinkedHashMap<>();
     }
 
@@ -53,6 +53,13 @@ public class NetworkMapData implements Serializable {
 
         setOutsidePID();
 
+    }
+
+    //copy method
+    public NetworkMapData(NetworkMapData nData){
+        this.data = new LinkedHashMap<>(nData.getData());
+        this.pids = new LinkedHashMap<>(nData.getPids());
+        this.pidList = new LinkedHashMap<>(nData.getPidList());
     }
 
     @JsonAnyGetter
