@@ -49,11 +49,6 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
         this.networkMap = new NetworkMapData(nData);
     }
 
-
-    public InfoResourceNetworkMap(InfoResourceNetworkMap irnm) {
-        this(irnm.getMeta(), irnm.getNetworkMap());
-    }
-
     public InfoResourceNetworkMap(Iterable<Host> hosts,
                                   Logger log,
                                   DeviceService deviceService) {
@@ -109,24 +104,31 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
 
         Map<String, PID> pids = this.networkMap.getPids();
 
-        if(pids != null &&
-                pids.keySet().size() > 0 &&
-                    filNetMap.getPids().size() > 0){
+        NetworkMapData newMapData = new NetworkMapData();
 
-            Set<String> pidsToKeep = new HashSet<>(filNetMap.getPids());
+        Map<String, EndpointAddrGroup> filteredData = newMapData.getData();
 
-            Set<String> pidsToRemove = new HashSet<>(this.getNetworkMap().getData().keySet());
+        if(pids != null && pids.keySet().size() > 0 && filNetMap.getPids().size() > 0){
 
-            for(String pidsKeep : pidsToKeep)
-                if(pidsToRemove.contains(pidsKeep)) pidsToRemove.remove(pidsKeep);
+            filNetMap.getPids().retainAll(this.getNetworkMap().getData().keySet());
 
-            Map<String, EndpointAddrGroup> data = this.getNetworkMap().getData();
+            for(Map.Entry<String, EndpointAddrGroup> data : this.getNetworkMap().getData().entrySet()){
 
-            for (String pid : pidsToRemove)
-                if(data.containsKey(pid)) data.remove(pid);
+                if(filNetMap.getPids().contains(data.getKey()) &&
+                        !filteredData.containsKey(data.getKey())){
+
+                    filteredData.put(data.getKey(), new EndpointAddrGroup());
+
+                    for(Map.Entry<String, ArrayList<String>> group : data.getValue().getEndGr().entrySet())
+                        filteredData.get(data.getKey()).getEndGr().put(group.getKey(), group.getValue());
+
+                }
+
+            }
+
         }
 
-        if(filNetMap.getAddressTypes() != null){
+        /*if(filNetMap.getAddressTypes() != null){
             //filNetMap.getAddressTypes().size() > 0
             for(Map.Entry<String, EndpointAddrGroup> entry : this.getNetworkMap().getData().entrySet()){
 
@@ -136,8 +138,12 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
                         System.out.println();
                 }
             }
-        }
+        }*/
+
+        this.networkMap = newMapData;
+
     }
+
 
     public InfoResourceNetworkMap newInstance(){
         // new copy, not a reference
