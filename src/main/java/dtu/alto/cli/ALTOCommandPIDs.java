@@ -1,7 +1,7 @@
 package dtu.alto.cli;
 
 import dtu.alto.core.ALTOService;
-import dtu.alto.pid.PID;
+import dtu.alto.pid.PIDName;
 import org.apache.karaf.shell.commands.Command;
 import org.onlab.packet.IpAddress;
 import org.onosproject.cli.AbstractShellCommand;
@@ -25,24 +25,24 @@ public class ALTOCommandPIDs extends AbstractShellCommand {
 
         ALTOService altoService = get(ALTOService.class);
 
-        Map<PID, List<Host>> pids = altoService.getPIDs();
+        Map<PIDName, List<Host>> pids = altoService.getPIDs();
         printPIDs(pids);
 
     }
 
-    private void printPIDs(Map<PID, List<Host>> pids){
+    private void printPIDs(Map<PIDName, List<Host>> pids){
 
         printBar();
 
-        SortedMap<PID, List<Host>> sPIDs = new TreeMap<>();
+        SortedMap<PIDName, List<Host>> sPIDs = new TreeMap<>();
 
         sPIDs.putAll(pids);
 
-        for(SortedMap.Entry<PID, List<Host>> entry : sPIDs.entrySet()){
+        for(SortedMap.Entry<PIDName, List<Host>> entry : sPIDs.entrySet()){
 
             List<Host> hostList = entry.getValue();
 
-            print(entry.getKey().getPidName()+": ");
+            print(entry.getKey().getName()+": ");
 
             for(Host host: hostList){
                 for(IpAddress ip : host.ipAddresses()){

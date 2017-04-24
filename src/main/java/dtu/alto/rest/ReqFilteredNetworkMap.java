@@ -3,6 +3,7 @@ package dtu.alto.rest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import dtu.alto.pid.PIDName;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ import java.util.List;
 public class ReqFilteredNetworkMap implements Serializable {
 
     @JsonProperty("pids")
-    List<String> pids = new ArrayList<>();
+    List<PIDName> pids = new ArrayList<>();
 
     @JsonProperty("address-types")
     List<String> addressType = new ArrayList<>();
@@ -29,18 +30,18 @@ public class ReqFilteredNetworkMap implements Serializable {
 
     }
 
-    public ReqFilteredNetworkMap(List<String> pids, List<String> addressType) {
+    public ReqFilteredNetworkMap(List<PIDName> pids, List<String> addressType) {
         this.pids = pids;
         this.addressType = addressType;
     }
 
     @JsonProperty("pids")
-    public List<String> getPids() {
+    public List<PIDName> getPids() {
         return pids;
     }
 
     @JsonProperty("pids")
-    public void setPids(List<String> pids) {
+    public void setPids(List<PIDName> pids) {
         this.pids = pids;
     }
 

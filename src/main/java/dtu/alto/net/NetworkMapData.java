@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import dtu.alto.base.EndpointAddrGroup;
-import dtu.alto.pid.PID;
+import dtu.alto.endpoint.EndpointAddr;
+import dtu.alto.pid.PIDName;
 import org.onosproject.net.Host;
 import org.onosproject.net.device.DeviceService;
 import org.slf4j.Logger;
@@ -19,11 +20,13 @@ import java.util.*;
 public class NetworkMapData implements Serializable {
 
 
-    private Map<String, EndpointAddrGroup> data = null;
+    private Map<PIDName, EndpointAddrGroup> data = null;
 
-    private Map<String, PID> pids = null;
+    @JsonIgnore
+    private Map<String, PIDName> pids = null;
 
-    private Map<PID, List<Host>> pidList = null;
+    @JsonIgnore
+    private Map<PIDName, List<Host>> pidList = null;
 
     private int createdPIDs = 0;
 
@@ -63,32 +66,32 @@ public class NetworkMapData implements Serializable {
     }
 
     @JsonAnyGetter
-    public Map<String, EndpointAddrGroup> getData() {
+    public Map<PIDName, EndpointAddrGroup> getData() {
         return data;
     }
 
     @JsonAnySetter
-    public void setData(Map<String, EndpointAddrGroup> data) {
+    public void setData(Map<PIDName, EndpointAddrGroup> data) {
         this.data = data;
     }
 
     @JsonIgnore
-    public Map<String, PID> getPids() {
+    public Map<String, PIDName> getPids() {
         return pids;
     }
 
     @JsonIgnore
-    public void setPids(Map<String, PID> pids) {
+    public void setPids(Map<String, PIDName> pids) {
         this.pids = pids;
     }
 
     @JsonIgnore
-    public Map<PID, List<Host>> getPidList() {
+    public Map<PIDName, List<Host>> getPidList() {
         return pidList;
     }
 
     @JsonIgnore
-    public void setPidList(Map<PID, List<Host>> pidList) {
+    public void setPidList(Map<PIDName, List<Host>> pidList) {
         this.pidList = pidList;
     }
 
@@ -100,24 +103,24 @@ public class NetworkMapData implements Serializable {
 
         String attachDevice = host.location().deviceId().toString();
 
-        for (Map.Entry<String, EndpointAddrGroup> entry : data.entrySet()) {
+        for (Map.Entry<PIDName, EndpointAddrGroup> entry : data.entrySet()) {
 
-            String pid = entry.getKey();
+            PIDName pid = entry.getKey();
             EndpointAddrGroup aGr = entry.getValue();
 
             if(pid != null){ // if we reach here it should be != null
 
-                if(pids.get(pid).getRefDevice().equals(attachDevice)){
+                if(pid.getRefDevice().equals(attachDevice)){
 
                     if(host.ipAddresses().iterator().hasNext()) {
 
-                        //String ipAddress = host.ipAddresses().iterator().next().getIp4Address().toString();
-                        String ipAddressAndMask = host.ipAddresses().iterator().next().toIpPrefix().toString();
+                        String ipAddress = host.ipAddresses().iterator().next().getIp4Address().toString();
+                        //String ipAddressAndMask = host.ipAddresses().iterator().next().toIpPrefix().toString();
                         //log.info("IP ["+ipAddress+"] / Mask ["+mask+"}");
 
-                        aGr.insertHost(ipAddressAndMask);
+                        aGr.insertHost(ipAddress);
 
-                        pidList.get(pids.get(pid)).add(host);
+                        pidList.get(pid).add(host);
 
                         found = true;
                     }
@@ -133,19 +136,20 @@ public class NetworkMapData implements Serializable {
 
             if(host.ipAddresses().iterator().hasNext()) {
 
-                PID pid = new PID(++createdPIDs,
+                PIDName pid = new PIDName(++createdPIDs,
                                    host.location().deviceId().toString(),
                                     deviceService.getDevice(host.location().deviceId()));
 
-                pids.put(pid.getPidName(), pid);
+                pids.put(pid.getName(), pid);
 
                 pidList.put(pid, new ArrayList<>());
                 pidList.get(pid).add(host);
 
-                String ipAddressAndMask = host.ipAddresses().iterator().next().toIpPrefix().toString();
+                String ipAddress = host.ipAddresses().iterator().next().getIp4Address().toString();
+                //String ipAddressAndMask = host.ipAddresses().iterator().next().toIpPrefix().toString();
 
-                EndpointAddrGroup gr = new EndpointAddrGroup(ipAddressAndMask);
-                data.put(pid.getPidName(), gr);
+                EndpointAddrGroup gr = new EndpointAddrGroup(ipAddress);
+                data.put(pid, gr);
 
             }else{
                 log.info("Host with id ["+host.id()+"] and mac ["+host.mac()+"] has unknown IP");
@@ -156,14 +160,23 @@ public class NetworkMapData implements Serializable {
 
     public void setOutsidePID(){
 
-        PID pid = new PID(++createdPIDs, null, null);
-        pids.put(pid.getPidName(), pid);
+        PIDName pid = new PIDName(++createdPIDs);
+        pids.put(pid.getName(), pid);
 
-        data.put(pid.getPidName(), new EndpointAddrGroup());
+        data.put(pid, new EndpointAddrGroup());
 
-        data.get(pid.getPidName()).getEndGr().put(EndpointAddrGroup.IPV4, new ArrayList<>(Arrays.asList("0.0.0.0/0")));
-        data.get(pid.getPidName()).getEndGr().put(EndpointAddrGroup.IPV6, new ArrayList<>(Arrays.asList("::/0")));
+        //data.get(pid.getName()).getEndGr().put(EndpointAddrGroup.IPV4, new ArrayList<>(Arrays.asList("0.0.0.0/0")));
+        //data.get(pid.getName()).getEndGr().put(EndpointAddrGroup.IPV6, new ArrayList<>(Arrays.asList("::/0")));
+
+        data.get(pid).getEndGr().put(
+                EndpointAddrGroup.IPV4,
+                new ArrayList<>(Arrays.asList(new EndpointAddr("0.0.0.0/0")))
+        );
+
+        data.get(pid).getEndGr().put(
+                EndpointAddrGroup.IPV6,
+                new ArrayList<>(Arrays.asList(new EndpointAddr("::/0")))
+        );
+
     }
-
-
 }

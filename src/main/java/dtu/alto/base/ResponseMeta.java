@@ -62,6 +62,10 @@ public class ResponseMeta implements Serializable {
 
     }
 
+    public ResponseMeta(CostType cType){
+        this.costType = cType;
+    }
+
     public ResponseMeta(ResponseMeta rMeta){
 
         if(rMeta.getVersionTag() != null)

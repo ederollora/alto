@@ -2,6 +2,7 @@ package dtu.alto.cli;
 
 import dtu.alto.core.ALTOService;
 import dtu.alto.cost.DstCosts;
+import dtu.alto.pid.PIDName;
 import org.apache.karaf.shell.commands.Command;
 import org.onosproject.cli.AbstractShellCommand;
 
@@ -22,25 +23,25 @@ public class ALTOCommandCost extends AbstractShellCommand {
 
         ALTOService altoService = get(ALTOService.class);
 
-        Map<String, DstCosts> costs = altoService.getCostMap().getCostMap().getData();
+        Map<PIDName, DstCosts> costs = altoService.getCostMap().getCostMap().getData();
         printCosts(costs);
 
     }
 
-    private void printCosts(Map<String, DstCosts> costs){
+    private void printCosts(Map<PIDName, DstCosts> costs){
 
         printBar();
 
-        SortedMap<String, DstCosts> sCosts = new TreeMap<>();
+        SortedMap<PIDName, DstCosts> sCosts = new TreeMap<>();
 
         sCosts.putAll(costs);
 
-        for(Map.Entry<String, DstCosts> cost : sCosts.entrySet()){
+        for(Map.Entry<PIDName, DstCosts> cost : sCosts.entrySet()){
 
-            print("Source: "+cost.getKey());
+            print("Source: "+cost.getKey().getName());
 
-            for(Map.Entry<String, Integer> destcosts : cost.getValue().getDstCosts().entrySet()){
-                print("  -> Dest: "+destcosts.getKey()+" - Cost: "+destcosts.getValue().toString());
+            for(Map.Entry<PIDName, Integer> destcosts : cost.getValue().getDstCosts().entrySet()){
+                print("  -> Dest: "+destcosts.getKey().getName()+" - Cost: "+destcosts.getValue().toString());
             }
         }
     }

@@ -8,8 +8,10 @@ import dtu.alto.base.EndpointAddrGroup;
 import dtu.alto.base.ResponseEntityBase;
 import dtu.alto.base.ResponseMeta;
 import dtu.alto.base.VersionTag;
+import dtu.alto.endpoint.AddressType;
+import dtu.alto.endpoint.EndpointAddr;
 import dtu.alto.net.NetworkMapData;
-import dtu.alto.pid.PID;
+import dtu.alto.pid.PIDName;
 import dtu.alto.rest.ReqFilteredNetworkMap;
 import org.onosproject.net.Host;
 import org.onosproject.net.device.DeviceService;
@@ -67,7 +69,7 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
     }
 
     @JsonIgnore
-    public Map<PID, List<Host>> getPIDs(){
+    public Map<PIDName, List<Host>> getPIDs(){
 
         return this.networkMap.getPidList();
     }
@@ -102,24 +104,24 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
 
     public void filterMap(ReqFilteredNetworkMap filNetMap){
 
-        Map<String, PID> pids = this.networkMap.getPids();
+        Map<String, PIDName> pids = this.networkMap.getPids();
 
         NetworkMapData newMapData = new NetworkMapData();
 
-        Map<String, EndpointAddrGroup> filteredData = newMapData.getData();
+        Map<PIDName, EndpointAddrGroup> filteredData = newMapData.getData();
 
         if(pids != null && pids.keySet().size() > 0 && filNetMap.getPids().size() > 0){
 
             filNetMap.getPids().retainAll(this.getNetworkMap().getData().keySet());
 
-            for(Map.Entry<String, EndpointAddrGroup> data : this.getNetworkMap().getData().entrySet()){
+            for(Map.Entry<PIDName, EndpointAddrGroup> data : this.getNetworkMap().getData().entrySet()){
 
                 if(filNetMap.getPids().contains(data.getKey()) &&
                         !filteredData.containsKey(data.getKey())){
 
                     filteredData.put(data.getKey(), new EndpointAddrGroup());
 
-                    for(Map.Entry<String, ArrayList<String>> group : data.getValue().getEndGr().entrySet())
+                    for(Map.Entry<AddressType, List<EndpointAddr>> group : data.getValue().getEndGr().entrySet())
                         filteredData.get(data.getKey()).getEndGr().put(group.getKey(), group.getValue());
 
                 }
@@ -143,7 +145,6 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
         this.networkMap = newMapData;
 
     }
-
 
     public InfoResourceNetworkMap newInstance(){
         // new copy, not a reference

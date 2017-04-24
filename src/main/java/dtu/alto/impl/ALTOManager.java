@@ -6,7 +6,7 @@ import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
 import dtu.alto.resources.InfoResourceCostMap;
 import dtu.alto.resources.InfoResourceNetworkMap;
-import dtu.alto.pid.PID;
+import dtu.alto.pid.PIDName;
 import dtu.alto.core.ALTOService;
 import org.apache.felix.scr.annotations.*;
 import org.onosproject.net.Host;
@@ -94,7 +94,7 @@ public class ALTOManager implements ALTOService {
     }
 
     @Override
-    public Map<PID,List<Host>> getPIDs(){
+    public Map<PIDName,List<Host>> getPIDs(){
         return infoResNetworkMap.getPIDs();
     }
 
@@ -118,7 +118,7 @@ public class ALTOManager implements ALTOService {
 
         infoResNetworkMap = new InfoResourceNetworkMap(hosts, log, deviceService);
 
-        addVtagToList(infoResNetworkMap.VersionTag());
+        //addVtagToList(infoResNetworkMap.VersionTag());
 
     }
 
@@ -161,15 +161,13 @@ public class ALTOManager implements ALTOService {
         if(latestVtags.size() == 5){
             shiftVtags();
         }
-
         latestVtags.add(tag);
-
     }
 
     private void shiftVtags(){
 
-        for(int i = 0; i < (latestVtags.size()-2); i++)
-            latestVtags.add(i, latestVtags.get(i+1));
+        for(int i = 1; i < latestVtags.size(); i++)
+            latestVtags.add(i-1, latestVtags.get(i));
 
         latestVtags.remove(latestVtags.size()-1);
     }
@@ -215,10 +213,5 @@ public class ALTOManager implements ALTOService {
         }
     }
 
-    private void configureAltoServer(){
-
-
-
-    }
 
 }

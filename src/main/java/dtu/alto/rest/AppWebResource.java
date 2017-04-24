@@ -20,13 +20,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import dtu.alto.base.ResponseMeta;
 import dtu.alto.cost.CostType;
+import dtu.alto.endpointcost.ReqEndpointCostMap;
+import dtu.alto.pid.PIDName;
 import dtu.alto.resources.InfoResourceCostMap;
+import dtu.alto.resources.InfoResourceEndpointCostMap;
 import dtu.alto.resources.InfoResourceNetworkMap;
 import dtu.alto.error.ALTOErrorCodes;
 import dtu.alto.error.ALTOErrorResponse;
 import dtu.alto.media.ALTOMediaType;
 import dtu.alto.core.ALTOService;
+import org.onosproject.net.Host;
 import org.onosproject.rest.AbstractWebResource;
 import org.slf4j.Logger;
 
@@ -34,6 +40,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -57,6 +65,9 @@ public class AppWebResource extends AbstractWebResource {
 
         ObjectMapper mapper = new ObjectMapper();
         String json = null;
+
+        //mapper.configure(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED, true);
+        //mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 
         try {
             json = mapper.writeValueAsString(netMap);
@@ -88,19 +99,12 @@ public class AppWebResource extends AbstractWebResource {
 
             //Either json structures is incorrect or field not present in POJO
 
-            ALTOErrorResponse errResponse = new ALTOErrorResponse();
-
-            errResponse.geteMeta().setCode(ALTOErrorCodes.E_SYNTAX);
-            errResponse.geteMeta().setSyntaxError(
-                    "Col: "+syntaxEx.getLocation().getColumnNr()+". "+
-                    "Line: "+syntaxEx.getLocation().getLineNr()+". "+
-                    "Offset: "+syntaxEx.getLocation().getCharOffset()+"."
+            return JSONParseException(
+                    syntaxEx.getLocation().getColumnNr(),
+                    syntaxEx.getLocation().getLineNr(),
+                    syntaxEx.getLocation().getCharOffset(),
+                    body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
             );
-
-            return ok(errResponse.toJSON())
-                    .status(400)
-                    .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
-                    .build();
 
         }
         catch (Exception e) {
@@ -122,7 +126,9 @@ public class AppWebResource extends AbstractWebResource {
 
         ALTOService altoService = get(ALTOService.class);
 
-        netMap = new InfoResourceNetworkMap(altoService.getNetworkMap());
+        //netMap = new InfoResourceNetworkMap(altoService.getNetworkMap());
+
+        netMap = altoService.getNetworkMap().newInstance();
 
         netMap.filterMap(filNetMap);
 
@@ -196,11 +202,6 @@ public class AppWebResource extends AbstractWebResource {
             e.printStackTrace();
         }
 
-
-
-        Response.ResponseBuilder rp = ok(json);
-
-
         return ok(json).build();
     }
 
@@ -217,6 +218,8 @@ public class AppWebResource extends AbstractWebResource {
 
         ReqFilteredCostMap filter = null;
         InfoResourceCostMap costMap = null;
+        InfoResourceCostMap newCostMap = null;
+
 
         try {
             filter = mapper.readValue(body, ReqFilteredCostMap.class);
@@ -226,38 +229,21 @@ public class AppWebResource extends AbstractWebResource {
             //Either json structure is incorrect or field not present in POJO
             //right now unknown properties do not raise an exception see: mapper.disable() ...
 
-            ALTOErrorResponse errResponse = new ALTOErrorResponse();
-
-            errResponse.geteMeta().setCode(ALTOErrorCodes.E_SYNTAX);
-            errResponse.geteMeta().setSyntaxError(
-                    "Column: "+syntaxEx.getLocation().getColumnNr()+". \n"+
-                    "Line: "+syntaxEx.getLocation().getLineNr()+". \n"+
-                    "Offset: "+syntaxEx.getLocation().getCharOffset()+". \n"+
-                    "PositionCharacter: "+body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
+            return JSONParseException(
+                    syntaxEx.getLocation().getColumnNr(),
+                    syntaxEx.getLocation().getLineNr(),
+                    syntaxEx.getLocation().getCharOffset(),
+                    body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
             );
-
-            return ok(errResponse.toJSON())
-                    .status(400)
-                    .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
-                    .build();
 
         }
         catch (Exception e) {
             e.printStackTrace();
         }
 
-        if(filter != null || filter.getCostType() == null){
+        if(filter.getCostType() == null)
+            return missingCostType();
 
-            ALTOErrorResponse errResponse = new ALTOErrorResponse();
-
-            errResponse.geteMeta().setCode(ALTOErrorCodes.E_MISSING_FIELD);
-            errResponse.geteMeta().setField("cost-type");
-
-            return ok(errResponse.toJSON())
-                    .status(400)
-                    .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
-                    .build();
-        }
 
         ALTOService altoService = get(ALTOService.class);
 
@@ -276,6 +262,115 @@ public class AppWebResource extends AbstractWebResource {
         return ok(json)
                 .type(ALTOMediaType.APPLICATION_ALTO_COSTMAP)
                 .build();
+    }
+
+
+    @POST
+    @Path("endpointcost/lookup")
+    @Consumes(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOSTPARAMS)
+    @Produces({ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOST,
+            ALTOMediaType.APPLICATION_ALTO_ERROR})
+    public Response returnEndpointCostMap(String body) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+
+        ReqEndpointCostMap reqEndpointCostMap = null;
+        InfoResourceEndpointCostMap infoResCostMap;
+
+
+        try {
+            reqEndpointCostMap = mapper.readValue(body, ReqEndpointCostMap.class);
+        } catch (JsonParseException | JsonMappingException syntaxEx) {
+
+            //Either json structure is incorrect or field not present in POJO
+            //right now unknown properties do not raise an exception see: mapper.disable() ...
+
+            return JSONParseException(
+                    syntaxEx.getLocation().getColumnNr(),
+                    syntaxEx.getLocation().getLineNr(),
+                    syntaxEx.getLocation().getCharOffset(),
+                    body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
+            );
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if(reqEndpointCostMap.getCostType() == null)
+            return missingCostType();
+
+        ALTOService altoService = get(ALTOService.class);
+        InfoResourceCostMap costMap = altoService.getCostMap();
+        Map<PIDName,List<Host>> pidList = altoService.getPIDs();
+
+        infoResCostMap = new InfoResourceEndpointCostMap();
+        ResponseMeta rMeta = new ResponseMeta(reqEndpointCostMap.getCostType());
+        infoResCostMap.setMeta(rMeta);
+
+        infoResCostMap.setCosts(costMap, pidList, reqEndpointCostMap);
+
+        String json = null;
+
+        try {
+            json = mapper.writeValueAsString(infoResCostMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return ok(json)
+                .type(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOST)
+                .build();
+    }
+
+    private Response missingCostType(){
+
+        ALTOErrorResponse errResponse = new ALTOErrorResponse();
+
+        errResponse.geteMeta().setCode(ALTOErrorCodes.E_MISSING_FIELD);
+        errResponse.geteMeta().setField("cost-type");
+
+        return ok(errResponse.toJSON())
+                .status(400)
+                .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
+                .build();
+
+    }
+
+    private Response JSONParseException(int col, int line, long off, int pos){
+
+        ALTOErrorResponse errResponse = new ALTOErrorResponse();
+
+        errResponse.geteMeta().setCode(ALTOErrorCodes.E_SYNTAX);
+        errResponse.geteMeta().setSyntaxError(
+                "Column: " + col + ". " +
+                "Line: " + line + ". " +
+                "Offset: " + off + ". " +
+                "PositionCharacter: " + pos
+        );
+
+        return ok(errResponse.toJSON())
+                .status(400)
+                .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
+                .build();
+
+    }
+
+    private Response customError(String message){
+
+        ALTOErrorResponse errResponse = new ALTOErrorResponse();
+
+        errResponse.geteMeta().setCode(ALTOErrorCodes.E_SYNTAX);
+        errResponse.geteMeta().setSyntaxError(
+                "Reason: "+message
+        );
+
+        return ok(errResponse.toJSON())
+                .status(400)
+                .type(ALTOMediaType.APPLICATION_ALTO_ERROR)
+                .build();
+
     }
 
 }

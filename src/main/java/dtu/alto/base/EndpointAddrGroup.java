@@ -1,17 +1,14 @@
 package dtu.alto.base;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.*;
+import dtu.alto.endpoint.AddressType;
+import dtu.alto.endpoint.EndpointAddr;
 
 import java.io.Serializable;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by s150924 on 3/10/17.
@@ -26,14 +23,13 @@ import java.util.Map;
 
 public class EndpointAddrGroup implements Serializable {
 
-    public static String IPV4 = "ipv4";
-    public static String IPV6 = "ipv6";
+    public static AddressType IPV4 = new AddressType("ipv4");
+    public static AddressType IPV6 = new AddressType("ipv6");
 
-    Map<String, ArrayList<String>> endGr = null;
-
+    SortedMap<AddressType, List<EndpointAddr>> endGr;
 
     public EndpointAddrGroup(){
-        endGr = new LinkedHashMap<>();
+        endGr = new TreeMap<>();
     }
 
     public EndpointAddrGroup(String ipAddressAndMask) throws UnknownHostException {
@@ -44,27 +40,27 @@ public class EndpointAddrGroup implements Serializable {
 
 
     @JsonAnyGetter
-    public Map<String, ArrayList<String>> getEndGr() {
+    public SortedMap<AddressType, List<EndpointAddr>> getEndGr() {
         return endGr;
     }
 
     @JsonAnySetter
-    public void setEndGr(Map<String, ArrayList<String>> endGr) {
+    public void setEndGr(SortedMap<AddressType, List<EndpointAddr>> endGr) {
         this.endGr = endGr;
     }
 
-    public void insertHost(String ipAddressAndMask) throws UnknownHostException {
+    public void insertHost(String ip) throws UnknownHostException {
 
-        InetAddress address = InetAddress.getByName(ipAddressAndMask.split("/")[0]);
+        InetAddress address = InetAddress.getByName(ip);
 
         if (address instanceof Inet4Address) {
             if(!this.endGr.containsKey(IPV4))
                 endGr.put(IPV4, new ArrayList<>());
-            this.endGr.get(IPV4).add(ipAddressAndMask);
+            this.endGr.get(IPV4).add(new EndpointAddr(ip));
         }else{
             if(!this.endGr.containsKey(IPV6))
                 endGr.put(IPV6, new ArrayList<>());
-            this.endGr.get(IPV6).add(ipAddressAndMask);
+            this.endGr.get(IPV6).add(new EndpointAddr(ip));
         }
 
     }

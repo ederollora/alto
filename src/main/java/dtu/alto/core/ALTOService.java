@@ -3,7 +3,7 @@ package dtu.alto.core;
 import dtu.alto.base.VersionTag;
 import dtu.alto.resources.InfoResourceCostMap;
 import dtu.alto.resources.InfoResourceNetworkMap;
-import dtu.alto.pid.PID;
+import dtu.alto.pid.PIDName;
 import org.onosproject.net.Host;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public interface ALTOService {
 
     InfoResourceCostMap getCostMap();
 
-    Map<PID,List<Host>> getPIDs();
+    Map<PIDName,List<Host>> getPIDs();
 
     List<VersionTag> getAllVersionTags();
 

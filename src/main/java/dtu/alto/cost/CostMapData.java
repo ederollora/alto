@@ -2,9 +2,8 @@ package dtu.alto.cost;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import dtu.alto.pid.PID;
-import dtu.alto.base.SupportedCostTypes;
+import dtu.alto.endpoint.TypedEndpointAddr;
+import dtu.alto.pid.PIDName;
 import org.onosproject.net.Host;
 import org.onosproject.net.Path;
 import org.onosproject.net.topology.TopologyService;
@@ -18,7 +17,7 @@ import java.util.*;
  */
 public class CostMapData implements Serializable{
 
-    SortedMap<String, DstCosts> data = new TreeMap<String, DstCosts>();
+    SortedMap<PIDName, DstCosts> data = new TreeMap<>();
 
 
     public CostMapData(){
@@ -31,25 +30,25 @@ public class CostMapData implements Serializable{
 
 
     @JsonAnyGetter
-    public SortedMap<String, DstCosts> getData() {
+    public SortedMap<PIDName, DstCosts> getData() {
         return data;
     }
 
     @JsonAnySetter
-    public void setData(SortedMap<String, DstCosts> data) {
+    public void setData(SortedMap<PIDName, DstCosts> data) {
         this.data = data;
     }
 
 
-    public static CostMapData numHopCountCostMap(Map<PID, List<Host>> pidList,
+    public static CostMapData numHopCountCostMap(Map<PIDName, List<Host>> pidList,
                               Logger log,
                               TopologyService topoServ){
 
         CostMapData cmd = new CostMapData();
 
-        for(PID sourcePID: pidList.keySet()){
+        for(PIDName sourcePID: pidList.keySet()){
 
-            for(PID destPID: pidList.keySet()){
+            for(PIDName destPID: pidList.keySet()){
 
                 if(!sourcePID.equals(destPID)){
 
@@ -68,9 +67,9 @@ public class CostMapData implements Serializable{
                             }
                         }
                     }
-                    cmd.addCostToPID(sourcePID.getPidName(), destPID.getPidName(), (int)cost);
+                    cmd.addCostToPID(sourcePID, destPID, (int)cost);
                 }else{
-                    cmd.addCostToPID(sourcePID.getPidName(), destPID.getPidName(), 1);
+                    cmd.addCostToPID(sourcePID, destPID, 1);
                 }
             }
         }
@@ -79,7 +78,7 @@ public class CostMapData implements Serializable{
     }
 
 
-    public void addCostToPID(String sourcePIDName, String destPIDName, int cost){
+    public void addCostToPID(PIDName sourcePIDName, PIDName destPIDName, int cost){
 
         if(this.data == null){
             this.data = new TreeMap<>();
@@ -91,8 +90,6 @@ public class CostMapData implements Serializable{
             this.data.put(sourcePIDName, new DstCosts(destPIDName, cost));
         }
     }
-
-
 
 
 }

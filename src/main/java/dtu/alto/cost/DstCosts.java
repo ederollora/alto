@@ -2,7 +2,7 @@ package dtu.alto.cost;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import dtu.alto.pid.PIDName;
 
 import java.io.Serializable;
 import java.util.*;
@@ -13,31 +13,31 @@ import java.util.*;
 
 public class DstCosts implements Serializable {
 
-    SortedMap<String, Integer> dstCosts = new TreeMap<>();
+    SortedMap<PIDName, Integer> dstCosts = new TreeMap<>();
 
 
     public DstCosts(){
         dstCosts = new TreeMap<>();
     }
 
-    public DstCosts(String pidName, Integer cost){
+    public DstCosts(PIDName name, Integer cost){
         this();
-        this.insertCost(pidName, cost);
+        this.insertCost(name, cost);
     }
 
     @JsonAnyGetter
-    public SortedMap<String, Integer> getDstCosts() {
+    public SortedMap<PIDName, Integer> getDstCosts() {
         return dstCosts;
     }
 
     @JsonAnySetter
-    public void setDstCosts(SortedMap<String, Integer> dstCosts) {
+    public void setDstCosts(SortedMap<PIDName, Integer> dstCosts) {
         this.dstCosts = dstCosts;
     }
 
-    public void insertCost(String pidName, Integer cost){
+    public void insertCost(PIDName name, Integer cost){
 
-        this.dstCosts.put(pidName, cost);
+        this.dstCosts.put(name, cost);
 
     }
 

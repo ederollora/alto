@@ -16,19 +16,11 @@
 package dtu.alto.cli;
 
 import dtu.alto.core.ALTOService;
-import dtu.alto.cost.DstCosts;
-import dtu.alto.pid.PID;
 import dtu.alto.base.VersionTag;
 import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.commands.Option;
-import org.onlab.packet.IpAddress;
 import org.onosproject.cli.AbstractShellCommand;
-import org.onosproject.net.Host;
 
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 
 /**

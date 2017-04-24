@@ -10,7 +10,9 @@ import dtu.alto.base.VersionTag;
 import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
 import dtu.alto.cost.DstCosts;
+import dtu.alto.endpoint.TypedEndpointAddr;
 import dtu.alto.pid.PIDFilter;
+import dtu.alto.pid.PIDName;
 import dtu.alto.rest.ReqFilteredCostMap;
 
 import java.util.*;
@@ -69,13 +71,6 @@ public class InfoResourceCostMap extends ResponseEntityBase {
     }
 
 
-    public InfoResourceCostMap newInstance(){
-        // new copy, not a reference
-        return new InfoResourceCostMap(
-                this.getMeta(), this.getCostMap(), this.getSetOfCostMaps()
-        );
-    }
-
     @JsonProperty("cost-map")
     public CostMapData getCostMap() {
         return costMap;
@@ -108,19 +103,42 @@ public class InfoResourceCostMap extends ResponseEntityBase {
             PIDFilter filter = filCostMap.getPids();
 
             //remove unknown source & destination PIDs
-            // Should use a PID List instead of cost keys...
-            Set<String> existingPIDs = this.getCostMap().getData().keySet();
+            // Should use a PIDName List instead of cost keys...
+            Set<PIDName> existingPIDs = this.getCostMap().getData().keySet();
 
             if(filter.getSrcs() != null && filter.getSrcs().size() > 0) {
+                //existingPIDs.retainAll(filter.getSrcs());
                 filter.getSrcs().retainAll(existingPIDs);
-                this.getCostMap().getData().keySet().retainAll(filter.getSrcs());
             }
 
 
             if(filter.getDsts() != null && filter.getDsts().size() > 0){
+                //existingPIDs.retainAll(filter.getDsts());
                 filter.getDsts().retainAll(existingPIDs);
-                for(Map.Entry<String, DstCosts> pair : this.getCostMap().getData().entrySet())
-                    pair.getValue().getDstCosts().keySet().retainAll(filter.getDsts());
+                CostMapData costMapData = new CostMapData();
+
+                //MORDOR
+                for(Map.Entry<PIDName, DstCosts> srcTodsts : this.getCostMap().getData().entrySet()){
+
+                    if(filter.getSrcs().contains(srcTodsts.getKey()) &&
+                            !costMapData.getData().containsKey(srcTodsts.getKey())) {
+                        costMapData.getData().put(srcTodsts.getKey(), new DstCosts());
+
+                        for (Map.Entry<PIDName, Integer> dst : srcTodsts.getValue().getDstCosts().entrySet()){
+                            // if destination is in the filter & it has not been added yet (to avoid duplicates)
+
+                            if(filter.getDsts().contains(dst.getKey()) &&
+                                    !costMapData.getData().get(srcTodsts.getKey()).getDstCosts().containsKey(dst.getKey())) {
+                                costMapData.getData().get(srcTodsts.getKey()).getDstCosts().put(dst.getKey(), dst.getValue());
+                            }
+                        }
+                    }
+                }
+
+                this.costMap = costMapData;
+
+                //filter.getDsts().retainAll(pair.getValue().getDstCosts().values());
+                //pair.getValue().getDstCosts().keySet().retainAll(filter.getDsts());
             }
         }
 
@@ -128,13 +146,13 @@ public class InfoResourceCostMap extends ResponseEntityBase {
         if(filCostMap.getConstraints() != null
                 && filCostMap.getConstraints().size() > 0){
 
-            for(Map.Entry<String, DstCosts> pair : this.getCostMap().getData().entrySet()) {
+            for(Map.Entry<PIDName, DstCosts> pair : this.getCostMap().getData().entrySet()) {
 
-                Iterator<Map.Entry<String, Integer>> it = pair.getValue().getDstCosts().entrySet().iterator();
+                Iterator<Map.Entry<PIDName, Integer>> it = pair.getValue().getDstCosts().entrySet().iterator();
 
                 while (it.hasNext()) {
 
-                    Map.Entry<String, Integer> entry = it.next();
+                    Map.Entry<PIDName, Integer> entry = it.next();
 
                     if (!fulfillsConstraints(filCostMap.getConstraints(), entry.getValue()))
                         it.remove();
@@ -182,5 +200,13 @@ public class InfoResourceCostMap extends ResponseEntityBase {
 
         return true;
     }
+
+    public InfoResourceCostMap newInstance(){
+        // new copy, not a reference
+        return new InfoResourceCostMap(
+                this.getMeta(), this.getCostMap(), this.getSetOfCostMaps()
+        );
+    }
+
 
 }

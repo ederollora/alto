@@ -10,37 +10,37 @@ import java.util.List;
 public class PIDFilter {
 
     @JsonProperty("srcs")
-    private List<String> srcs = null;
+    private List<PIDName> srcs = null;
 
     @JsonProperty("dsts")
-    private List<String> dsts = null;
+    private List<PIDName> dsts = null;
 
     public PIDFilter() {
 
     }
 
-    public PIDFilter(List<String> srcs, List<String> dsts) {
+    public PIDFilter(List<PIDName> srcs, List<PIDName> dsts) {
         this.srcs = srcs;
         this.dsts = dsts;
     }
 
     @JsonProperty("srcs")
-    public List<String> getSrcs() {
+    public List<PIDName> getSrcs() {
         return srcs;
     }
 
     @JsonProperty("srcs")
-    public void setSrcs(List<String> srcs) {
+    public void setSrcs(List<PIDName> srcs) {
         this.srcs = srcs;
     }
 
     @JsonProperty("dsts")
-    public List<String> getDsts() {
+    public List<PIDName> getDsts() {
         return dsts;
     }
 
     @JsonProperty("dsts")
-    public void setDsts(List<String> dsts) {
+    public void setDsts(List<PIDName> dsts) {
         this.dsts = dsts;
     }
 }
