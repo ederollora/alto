@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import dtu.alto.base.EndpointAddrGroup;
+import dtu.alto.endpoint.AddressType;
 import dtu.alto.endpoint.EndpointAddr;
 import dtu.alto.pid.PIDName;
 import org.onosproject.net.Host;
@@ -165,16 +166,13 @@ public class NetworkMapData implements Serializable {
 
         data.put(pid, new EndpointAddrGroup());
 
-        //data.get(pid.getName()).getEndGr().put(EndpointAddrGroup.IPV4, new ArrayList<>(Arrays.asList("0.0.0.0/0")));
-        //data.get(pid.getName()).getEndGr().put(EndpointAddrGroup.IPV6, new ArrayList<>(Arrays.asList("::/0")));
-
         data.get(pid).getEndGr().put(
-                EndpointAddrGroup.IPV4,
+                AddressType.IPV4,
                 new ArrayList<>(Arrays.asList(new EndpointAddr("0.0.0.0/0")))
         );
 
         data.get(pid).getEndGr().put(
-                EndpointAddrGroup.IPV6,
+                AddressType.IPV6,
                 new ArrayList<>(Arrays.asList(new EndpointAddr("::/0")))
         );
 

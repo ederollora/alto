@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import dtu.alto.endpoint.TypedEndpointAddr;
 
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Created by s150924 on 4/23/17.
@@ -14,6 +15,10 @@ import java.util.SortedMap;
 public class EndpointDstCosts {
 
     SortedMap<TypedEndpointAddr, Integer> dstCosts = null;
+
+    public EndpointDstCosts(){
+        this.dstCosts = new TreeMap<>();
+    }
 
     @JsonAnyGetter
     public SortedMap<TypedEndpointAddr, Integer> getDstCosts() {

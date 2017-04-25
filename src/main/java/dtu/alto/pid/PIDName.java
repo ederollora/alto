@@ -29,7 +29,6 @@ public class PIDName implements Serializable, Comparable<PIDName>{
 
     public PIDName(String name) throws Exception {
 
-
         for (int i = 0; i < name.length(); i++) {
             char c = name.charAt(i);
             if ((0x0030 >= c && c <= 0x0039)  || (0x0041 >= c && c <= 0x005A) ||

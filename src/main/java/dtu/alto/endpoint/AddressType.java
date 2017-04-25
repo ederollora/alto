@@ -1,24 +1,34 @@
 package dtu.alto.endpoint;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by s150924 on 4/23/17.
  */
-public class AddressType implements Serializable, Comparable<AddressType> {
+public class AddressType implements Serializable, Comparable<AddressType>
+{
 
     String aType = null;
 
+    public static final AddressType IPV4 = new AddressType("ipv4");
+    public static final AddressType IPV6 = new AddressType("ipv6");
+
+    private static Set<AddressType> ALLOWED_TYPES = new HashSet<>(
+            Arrays.asList( new AddressType[]{
+                    AddressType.IPV4,
+                    AddressType.IPV6
+            })
+    );
 
     public AddressType() {}
 
-    public AddressType(String aType) {
+    public AddressType(String aType){
         this.aType = aType;
     }
 
-    @JsonValue
     public String getaType() {
         return aType;
     }
@@ -26,7 +36,6 @@ public class AddressType implements Serializable, Comparable<AddressType> {
     public void setaType(String aType) {
         this.aType = aType;
     }
-
 
     public Boolean typeIsValid(String type){
 
@@ -71,4 +80,29 @@ public class AddressType implements Serializable, Comparable<AddressType> {
     public int compareTo(AddressType aT) {
         return this.aType.compareTo(aT.aType);
     }
+
+    public static boolean isValidAddressType(String aType){
+
+        for (int i = 0; i < aType.length(); i++) {
+            char c = aType.charAt(i);
+
+            if( (c < 0x0030) || (c > 0x0039 && c < 0x0041) ||
+                    (c > 0x005A && c < 0x0061) || (c > 0x007A))
+                return false;
+        }
+        return true;
+
+    }
+
+    public static boolean supportsAddressType(String type){
+
+        AddressType aType = new AddressType(type);
+
+        for(AddressType addressType : ALLOWED_TYPES)
+            if(addressType.equals(aType))
+                return true;
+
+        return false;
+    }
+
 }

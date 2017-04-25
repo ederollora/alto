@@ -15,7 +15,7 @@ public class EndpointCostMapData {
 
     SortedMap<TypedEndpointAddr, EndpointDstCosts> eCostMap = null;
 
-    public void EndpointCostMapData(){
+    public EndpointCostMapData(){
         this.eCostMap = new TreeMap<>();
     }
 

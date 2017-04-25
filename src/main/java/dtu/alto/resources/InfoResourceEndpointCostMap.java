@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import dtu.alto.base.ResponseEntityBase;
+import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.DstCosts;
 import dtu.alto.endpoint.TypedEndpointAddr;
 import dtu.alto.endpointcost.EndpointCostMapData;
@@ -47,7 +48,7 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
     }
 
 
-    public void setCosts(InfoResourceCostMap costMap,
+    public void setCosts(CostMapData costMapData,
                          Map<PIDName,List<Host>> pids,
                          ReqEndpointCostMap req){
 
@@ -59,7 +60,7 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
 
             for(TypedEndpointAddr dest : req.getEndpoints().getDsts()){
 
-                Integer cost = returnE2ECost(costMap, pids, source, dest);
+                Integer cost = returnE2ECost(costMapData, pids, source, dest);
 
                 if(cost != -1) {
 
@@ -73,20 +74,26 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
         }
     }
 
-    public Integer returnE2ECost(InfoResourceCostMap costMap, Map<PIDName,List<Host>> pids,
+    public Integer returnE2ECost(CostMapData costMapData, Map<PIDName,List<Host>> pids,
             TypedEndpointAddr source, TypedEndpointAddr dest){
 
         PIDName sourcePID = null, destPID = null;
-        SortedMap<PIDName, DstCosts> costs = costMap.getCostMap().getData();
+        SortedMap<PIDName, DstCosts> costs = costMapData.getData();
+
+        String sourceIP = source.getEndpointAddr().getAddress();
+        String destIP = dest.getEndpointAddr().getAddress();
 
         //search were the PID for source/destination endpoints
         for(Map.Entry<PIDName, List<Host>> pid : pids.entrySet()) {
 
             for (Host host : pid.getValue()) {
-                if (source.equals(host.ipAddresses().iterator().next()))
+
+                String hostIP = host.ipAddresses().iterator().next().toString();
+
+                if (sourceIP.equals(hostIP))
                     sourcePID = pid.getKey();
 
-                if (dest.equals(host.ipAddresses().iterator().next()))
+                if (destIP.equals(hostIP))
                     destPID = pid.getKey();
             }
 

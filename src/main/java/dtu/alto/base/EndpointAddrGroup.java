@@ -23,9 +23,6 @@ import java.util.*;
 
 public class EndpointAddrGroup implements Serializable {
 
-    public static AddressType IPV4 = new AddressType("ipv4");
-    public static AddressType IPV6 = new AddressType("ipv6");
-
     SortedMap<AddressType, List<EndpointAddr>> endGr;
 
     public EndpointAddrGroup(){
@@ -37,7 +34,6 @@ public class EndpointAddrGroup implements Serializable {
         this();
         this.insertHost(ipAddressAndMask);
     }
-
 
     @JsonAnyGetter
     public SortedMap<AddressType, List<EndpointAddr>> getEndGr() {
@@ -54,13 +50,13 @@ public class EndpointAddrGroup implements Serializable {
         InetAddress address = InetAddress.getByName(ip);
 
         if (address instanceof Inet4Address) {
-            if(!this.endGr.containsKey(IPV4))
-                endGr.put(IPV4, new ArrayList<>());
-            this.endGr.get(IPV4).add(new EndpointAddr(ip));
+            if(!this.endGr.containsKey(AddressType.IPV4))
+                endGr.put(AddressType.IPV4, new ArrayList<>());
+            this.endGr.get(AddressType.IPV4).add(new EndpointAddr(ip));
         }else{
-            if(!this.endGr.containsKey(IPV6))
-                endGr.put(IPV6, new ArrayList<>());
-            this.endGr.get(IPV6).add(new EndpointAddr(ip));
+            if(!this.endGr.containsKey(AddressType.IPV6))
+                endGr.put(AddressType.IPV6, new ArrayList<>());
+            this.endGr.get(AddressType.IPV6).add(new EndpointAddr(ip));
         }
 
     }
