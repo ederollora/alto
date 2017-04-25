@@ -20,8 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import dtu.alto.base.ResponseMeta;
+import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
 import dtu.alto.endpointcost.ReqEndpointCostMap;
 import dtu.alto.pid.PIDName;
@@ -303,13 +303,14 @@ public class AppWebResource extends AbstractWebResource {
 
         ALTOService altoService = get(ALTOService.class);
         InfoResourceCostMap costMap = altoService.getCostMap();
+        CostMapData cData = costMap.getSetOfCostMaps().get(reqEndpointCostMap.getCostType());
         Map<PIDName,List<Host>> pidList = altoService.getPIDs();
 
         infoResCostMap = new InfoResourceEndpointCostMap();
         ResponseMeta rMeta = new ResponseMeta(reqEndpointCostMap.getCostType());
         infoResCostMap.setMeta(rMeta);
 
-        infoResCostMap.setCosts(costMap, pidList, reqEndpointCostMap);
+        infoResCostMap.setCosts(cData, pidList, reqEndpointCostMap);
 
         String json = null;
 
