@@ -3,7 +3,7 @@ package dtu.alto.error;
 /**
  * Created by s150924 on 3/28/17.
  */
-public class ALTOErrorCodes {
+public class ALTOErrorCode {
 
     public static final String E_SYNTAX = "E_SYNTAX";
     public static final String E_MISSING_FIELD = "E_MISSING_FIELD";
@@ -13,8 +13,8 @@ public class ALTOErrorCodes {
 
     String code = null;
 
-    public ALTOErrorCodes() {
-        this.code = null;
+    public ALTOErrorCode() {
+        this.code = new String();
     }
 
     public String getCode() {

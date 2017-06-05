@@ -70,7 +70,6 @@ public class InfoResourceCostMap extends ResponseEntityBase {
         this.setOfCostMaps = new HashMap<>(setOfData);
     }
 
-
     @JsonProperty("cost-map")
     public CostMapData getCostMap() {
         return costMap;

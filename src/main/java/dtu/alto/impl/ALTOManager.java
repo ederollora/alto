@@ -2,15 +2,22 @@ package dtu.alto.impl;
 
 import dtu.alto.base.SupportedCostTypes;
 import dtu.alto.base.VersionTag;
+import dtu.alto.cdn.RankedValues;
+import dtu.alto.cdn.ServerReport;
+import dtu.alto.cdn.ServerStatistics;
+import dtu.alto.core.LoadCheckService;
 import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
+import dtu.alto.linkload.PortStats;
 import dtu.alto.resources.InfoResourceCostMap;
 import dtu.alto.resources.InfoResourceNetworkMap;
 import dtu.alto.pid.PIDName;
 import dtu.alto.core.ALTOService;
 import org.apache.felix.scr.annotations.*;
+import org.onlab.packet.IpAddress;
 import org.onosproject.net.Host;
 
+import org.onosproject.net.HostId;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
@@ -21,9 +28,7 @@ import org.onosproject.net.topology.TopologyListener;
 import org.onosproject.net.topology.TopologyService;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -47,6 +52,9 @@ public class ALTOManager implements ALTOService {
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected TopologyService topologyService;
 
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
+    protected LoadCheckService loadCheckService;
+
     private HostListener hostListener = new InnerHostListener();
     private TopologyListener topologyListener = new InnerTopologyListener();
 
@@ -59,6 +67,8 @@ public class ALTOManager implements ALTOService {
     private List<VersionTag> latestVtags = new ArrayList<>();
 
     private List<CostType> costTypes = new ArrayList<>();
+
+    private ServerReport cdnServerStats;
 
 
     @Activate
@@ -107,6 +117,64 @@ public class ALTOManager implements ALTOService {
     public void rebuildMaps() {
         buildMaps();
     }
+
+    @Override
+    public void updateServerReport(ServerReport sReport) {
+        this.cdnServerStats = sReport;
+    }
+
+    @Override
+    public Map<IpAddress, RankedValues> getRankedEndpoints(List<IpAddress> endpoints) {
+
+        HashMap<IpAddress, PortStats> latestLoad = loadCheckService.getLoadReport();
+
+        Integer maxbw = null, minbw = null;
+        Integer mindelay, maxdelay;
+        Integer minload, maxload;
+        Integer minhop, maxhop;
+
+        for(IpAddress ip : endpoints){
+
+            for (ServerStatistics stats : cdnServerStats.getServerStats()){
+
+
+
+
+            }
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        return null;
+    }
+
+    @Override
+    public List<IpAddress> getContentServers() {
+
+        List<IpAddress> listIps = new ArrayList<>();
+
+        for (ServerStatistics stats : cdnServerStats.getServerStats()){
+
+            //IpAddress ip = new IpAddress(stats.getIpAddress());
+
+            listIps.add(stats.getIpAddress());
+        }
+
+        return listIps;
+    }
+
 
     private void buildNetworkMap(){
 
