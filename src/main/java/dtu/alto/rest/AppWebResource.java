@@ -369,7 +369,6 @@ public class AppWebResource extends AbstractWebResource {
             e.printStackTrace();
         }
 
-        serverReport.setTimeStamp(Calendar.getInstance());
         ALTOService altoService = get(ALTOService.class);
         altoService.updateServerReport(serverReport);
 
