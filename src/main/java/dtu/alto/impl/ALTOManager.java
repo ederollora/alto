@@ -17,7 +17,6 @@ import org.apache.felix.scr.annotations.*;
 import org.onlab.packet.IpAddress;
 import org.onosproject.net.Host;
 
-import org.onosproject.net.HostId;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
@@ -52,7 +51,6 @@ public class ALTOManager implements ALTOService {
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected TopologyService topologyService;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     protected LoadCheckService loadCheckService;
 
     private HostListener hostListener = new InnerHostListener();
@@ -68,7 +66,7 @@ public class ALTOManager implements ALTOService {
 
     private List<CostType> costTypes = new ArrayList<>();
 
-    private ServerReport cdnServerStats;
+    private ServerReport cdnServerStats = new ServerReport();
 
 
     @Activate
@@ -135,28 +133,14 @@ public class ALTOManager implements ALTOService {
 
         for(IpAddress ip : endpoints){
 
-            for (ServerStatistics stats : cdnServerStats.getServerStats()){
+            /*for (ServerStatistics stats : cdnServerStats.getServerStats()){
 
 
 
 
-            }
-
-
+            }*/
 
         }
-
-
-
-
-
-
-
-
-
-
-
-
         return null;
     }
 
@@ -165,7 +149,9 @@ public class ALTOManager implements ALTOService {
 
         List<IpAddress> listIps = new ArrayList<>();
 
-        for (ServerStatistics stats : cdnServerStats.getServerStats()){
+        //log.info("Size of servers: "+cdnServerStats.getServerStats().size());
+
+        for (ServerStatistics stats : cdnServerStats.getServerStats().values()){
 
             //IpAddress ip = new IpAddress(stats.getIpAddress());
 
