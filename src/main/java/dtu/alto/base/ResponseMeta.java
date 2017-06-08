@@ -72,7 +72,7 @@ public class ResponseMeta implements Serializable {
             this.vtag = new VersionTag(rMeta.getVersionTag());
 
         if(rMeta.getDependentVersionTags() != null)
-            this.dependentVersionTags = new ArrayList(Arrays.asList(rMeta.getDependentVersionTags()));
+            this.dependentVersionTags = rMeta.getDependentVersionTags();
 
         if(rMeta.getCostType() != null)
             this.costType = new CostType(rMeta.getCostType());

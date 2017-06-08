@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import dtu.alto.endpoint.TypedEndpointAddr;
 
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -28,5 +29,21 @@ public class EndpointCostMapData {
     public void seteCostMap(SortedMap<TypedEndpointAddr, EndpointDstCosts> eCostMap) {
         this.eCostMap = eCostMap;
     }
+
+    public void toOrdinal(){
+
+        int i = 1;
+
+        for(Map.Entry<TypedEndpointAddr, EndpointDstCosts> entry : this.eCostMap.entrySet()) {
+
+            for(Map.Entry<TypedEndpointAddr, Integer> destCosts : entry.getValue().getDstCosts().entrySet()) {
+                destCosts.setValue(i);
+                i++;
+            }
+            i = 0;
+        }
+
+    }
+
 
 }

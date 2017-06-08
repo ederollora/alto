@@ -15,6 +15,7 @@ import dtu.alto.pid.PIDName;
 import dtu.alto.rest.ReqFilteredNetworkMap;
 import org.onosproject.net.Host;
 import org.onosproject.net.device.DeviceService;
+import org.onosproject.net.host.HostAdminService;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
@@ -51,10 +52,9 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
         this.networkMap = new NetworkMapData(nData);
     }
 
-    public InfoResourceNetworkMap(Iterable<Host> hosts,
-                                  Logger log,
-                                  DeviceService deviceService) {
-        this.networkMap = new NetworkMapData(hosts, log, deviceService);
+    public InfoResourceNetworkMap(Iterable<Host> hosts, Logger log,
+                                  DeviceService deviceService, HostAdminService hostAdminService) {
+        this.networkMap = new NetworkMapData(hosts, log, deviceService, hostAdminService);
         this.getMeta().setVersionTag(new VersionTag(defaultResourceId));
     }
 
@@ -121,26 +121,21 @@ public class InfoResourceNetworkMap extends ResponseEntityBase implements Serial
 
                     filteredData.put(data.getKey(), new EndpointAddrGroup());
 
-                    for(Map.Entry<AddressType, List<EndpointAddr>> group : data.getValue().getEndGr().entrySet())
-                        filteredData.get(data.getKey()).getEndGr().put(group.getKey(), group.getValue());
+                    for(Map.Entry<AddressType, List<EndpointAddr>> group : data.getValue().getEndGr().entrySet()) {
+                        if (filNetMap.getAddressTypes().size() > 0){
+                            for (AddressType addType : filNetMap.getAddressTypes())
+                                if (group.getKey().equals(addType))
+                                    filteredData.get(data.getKey()).getEndGr().put(group.getKey(), group.getValue());
 
+                        }else{
+                            filteredData.get(data.getKey()).getEndGr().put(group.getKey(), group.getValue());
+                        }
+                    }
                 }
 
             }
 
         }
-
-        /*if(filNetMap.getAddressTypes() != null){
-            //filNetMap.getAddressTypes().size() > 0
-            for(Map.Entry<String, EndpointAddrGroup> entry : this.getNetworkMap().getData().entrySet()){
-
-                for(Map.Entry<String, ArrayList<String>> setOfIPs : entry.getValue().getEndGr().entrySet()){
-
-                    if(setOfIPs.getKey().equalsIgnoreCase(""))
-                        System.out.println();
-                }
-            }
-        }*/
 
         this.networkMap = newMapData;
 

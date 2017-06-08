@@ -44,13 +44,6 @@ public class LoadCheckManager implements LoadCheckService {
     protected DeviceService deviceService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected LinkService linkService;
-
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected PortStatisticsService portStatisticsService;
-
-
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected ALTOService altoService;
 
 
@@ -76,6 +69,7 @@ public class LoadCheckManager implements LoadCheckService {
     @Deactivate
     public void deactivate() {
 
+        scheduledExecutorService.shutdown();
         log.info("Stopped Load Checker Service");
     }
 
@@ -88,11 +82,11 @@ public class LoadCheckManager implements LoadCheckService {
 
     public void getStats() {
 
-        PortStats serverStats;
-        long latestTimestamp;
         List<IpAddress> cdnServers = altoService.getContentServers();
 
         for (IpAddress ip : cdnServers) {
+
+            PortStats serverStats;
 
             if(!serverStatistics.containsKey(ip)) {
                 serverStats = new PortStats();
@@ -111,7 +105,7 @@ public class LoadCheckManager implements LoadCheckService {
             if(latestStats == null)
                 return;
 
-            latestTimestamp = System.currentTimeMillis() % 1000;
+            long latestTimestamp = System.currentTimeMillis() % 1000;
             long recBytes = latestStats.bytesReceived();
             int lastNumSamples = serverStats.getNumSamples();
 
@@ -122,9 +116,8 @@ public class LoadCheckManager implements LoadCheckService {
                 serverStats.setLastTimestamp(latestTimestamp);
                 serverStats.setNumSamples(lastNumSamples+1);
                 return;
-            }
+            } else{
 
-            if(serverStats.getNumSamples() > 0){
                 long timeDiff = latestTimestamp - serverStats.getLastTimestamp();
                 long byteDiff = recBytes - serverStats.getLastSample();
                 float latestRate = (byteDiff / timeDiff) / 1000;
@@ -141,6 +134,13 @@ public class LoadCheckManager implements LoadCheckService {
                 serverStats.setLastTimestamp(latestTimestamp);
                 serverStats.setNumSamples(serverStats.getNumSamples()+1);
             }
+
+            log.info("Stats of server: "+ip);
+            log.info("Samples of that server: "+serverStats.getNumSamples());
+            log.info("Latest measured received bytes:"+serverStats.getLastSample());
+            if(serverStats.getNumSamples() > 1)
+                log.info("Rate: "+serverStats.getRate());
+                log.info("AvgRate: "+serverStats.getAvgRate());
         }
     }
 }

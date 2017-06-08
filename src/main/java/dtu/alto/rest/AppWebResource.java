@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dtu.alto.base.ResponseMeta;
+import dtu.alto.base.SupportedCostTypes;
 import dtu.alto.cdn.AckMessage;
 import dtu.alto.cdn.ServerReport;
 import dtu.alto.cost.CostMapData;
@@ -35,6 +36,8 @@ import dtu.alto.error.ALTOErrorResponse;
 import dtu.alto.media.ALTOMediaType;
 import dtu.alto.core.ALTOService;
 import org.onosproject.net.Host;
+import org.onosproject.net.host.HostService;
+import org.onosproject.net.topology.TopologyService;
 import org.onosproject.rest.AbstractWebResource;
 import org.slf4j.Logger;
 
@@ -54,6 +57,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("alto")
 public class AppWebResource extends AbstractWebResource {
+
+    private final Logger log = getLogger(getClass());
 
     @GET
     @Path("networkmap")
@@ -301,15 +306,26 @@ public class AppWebResource extends AbstractWebResource {
             return missingCostType();
 
         ALTOService altoService = get(ALTOService.class);
+        TopologyService topologyService = get(TopologyService.class);
+        HostService hostService = get(HostService.class);
+
         InfoResourceCostMap costMap = altoService.getCostMap();
-        CostMapData cData = costMap.getSetOfCostMaps().get(reqEndpointCostMap.getCostType());
+        CostMapData cData;
+
+
+        if(costMap.getSetOfCostMaps().containsKey(reqEndpointCostMap.getCostType()))
+            cData = costMap.getSetOfCostMaps().get(reqEndpointCostMap.getCostType());
+        else
+            cData = costMap.getSetOfCostMaps().get(new CostType("numerical", "routingcost"));
+
+
         Map<PIDName,List<Host>> pidList = altoService.getPIDs();
 
         infoResCostMap = new InfoResourceEndpointCostMap();
         ResponseMeta rMeta = new ResponseMeta(reqEndpointCostMap.getCostType());
         infoResCostMap.setMeta(rMeta);
 
-        infoResCostMap.setCosts(cData, pidList, reqEndpointCostMap);
+        infoResCostMap.setCosts(reqEndpointCostMap, rMeta, hostService, topologyService);
 
         String json = null;
 
@@ -327,7 +343,7 @@ public class AppWebResource extends AbstractWebResource {
     /* NEW PART */
 
     @POST
-    @Path("rank")
+    @Path("rank/weighted")
     @Consumes(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOSTPARAMS)
     @Produces({ALTOMediaType.APPLICATION_ALTO_COSTMAP,
             ALTOMediaType.APPLICATION_ALTO_ERROR})
@@ -346,10 +362,16 @@ public class AppWebResource extends AbstractWebResource {
             ALTOMediaType.APPLICATION_ALTO_ERROR})
     public Response storeServerStats(String body) throws IOException {
 
+        //log.info("Request received");
+
+        ALTOService altoService = get(ALTOService.class);
+
+        log.info("Content servers: "+altoService.getContentServers().size());
+
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-        ServerReport serverReport = null;
+        ServerReport serverReport = new ServerReport();
 
         try {
             serverReport = mapper.readValue(body, ServerReport.class);
@@ -369,7 +391,9 @@ public class AppWebResource extends AbstractWebResource {
             e.printStackTrace();
         }
 
-        ALTOService altoService = get(ALTOService.class);
+        log.info("ServerReport size: "+serverReport.getServerStats().size());
+        log.info("Server Report: "+serverReport.toString());
+
         altoService.updateServerReport(serverReport);
 
         AckMessage ack = new AckMessage();

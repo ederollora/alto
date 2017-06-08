@@ -40,7 +40,7 @@ public class CostMapData implements Serializable{
     }
 
 
-    public static CostMapData numHopCountCostMap(Map<PIDName, List<Host>> pidList,
+    public static CostMapData numRoutingCostMap(Map<PIDName, List<Host>> pidList,
                               Logger log,
                               TopologyService topoServ){
 
@@ -63,13 +63,30 @@ public class CostMapData implements Serializable{
                     if(paths.size() > 0){
                         for(Path p: paths){
                             if(cost == 0 || p.cost() < cost){
-                                cost = p.cost();
+                                cost = p.cost() - 1;
                             }
                         }
                     }
+
+                    /*
+                    *  PID1[ h1 ---- x ] ------ x ------- [ x ---- h2 ]PID2
+                    *          r1       r2        r3
+                    *
+                    * by def, path.cost() from r1 to r3 is 2,
+                    * then it counts as traversed links
+                    *
+                    * add 1 to cost to get the hopcount from
+                    * hosts of each pid.
+                    * subtract 1 to cost ot get the hopcount
+                    * taking the ref switches as units of traffic source
+                    *
+                    *
+                    * */
+
+
                     cmd.addCostToPID(sourcePID, destPID, (int)cost);
                 }else{
-                    cmd.addCostToPID(sourcePID, destPID, 1);
+                    cmd.addCostToPID(sourcePID, destPID, 0);
                 }
             }
         }

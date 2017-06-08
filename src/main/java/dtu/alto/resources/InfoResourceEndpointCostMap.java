@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import dtu.alto.base.ResponseEntityBase;
+import dtu.alto.base.ResponseMeta;
 import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.DstCosts;
 import dtu.alto.endpoint.TypedEndpointAddr;
@@ -11,10 +12,15 @@ import dtu.alto.endpointcost.EndpointCostMapData;
 import dtu.alto.endpointcost.EndpointDstCosts;
 import dtu.alto.endpointcost.ReqEndpointCostMap;
 import dtu.alto.pid.PIDName;
-import org.onosproject.net.Host;
+import org.onlab.packet.IpAddress;
+import org.onosproject.net.*;
+import org.onosproject.net.host.HostService;
+import org.onosproject.net.topology.TopologyService;
 
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 /**
@@ -48,9 +54,8 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
     }
 
 
-    public void setCosts(CostMapData costMapData,
-                         Map<PIDName,List<Host>> pids,
-                         ReqEndpointCostMap req){
+    public void setCosts(ReqEndpointCostMap req, ResponseMeta rMeta,
+                         HostService hostService, TopologyService topologyService){
 
         this.endpointCostMap = new EndpointCostMapData();
 
@@ -60,7 +65,7 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
 
             for(TypedEndpointAddr dest : req.getEndpoints().getDsts()){
 
-                Integer cost = returnE2ECost(costMapData, pids, source, dest);
+                Integer cost = returnE2ECost(hostService, source, dest, topologyService);
 
                 if(cost != -1) {
 
@@ -72,50 +77,57 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
                 }
             }
         }
+
+        if(rMeta.getCostType().getCostMode().equals("ordinal"))
+            this.endpointCostMap.toOrdinal();
+
     }
 
-    public Integer returnE2ECost(CostMapData costMapData, Map<PIDName,List<Host>> pids,
-            TypedEndpointAddr source, TypedEndpointAddr dest){
+    public Integer returnE2ECost(HostService hostService,
+            TypedEndpointAddr source, TypedEndpointAddr dest, TopologyService topologyService){
 
-        PIDName sourcePID = null, destPID = null;
-        SortedMap<PIDName, DstCosts> costs = costMapData.getData();
+        IpAddress sourceIP = IpAddress.valueOf(source.getEndpointAddr().getAddress());
+        IpAddress destIP = IpAddress.valueOf(dest.getEndpointAddr().getAddress());
 
-        String sourceIP = source.getEndpointAddr().getAddress();
-        String destIP = dest.getEndpointAddr().getAddress();
+        DeviceId sourceDev = hostService.getHostsByIp(sourceIP).iterator().next().location().deviceId();
+        DeviceId destDev = hostService.getHostsByIp(destIP).iterator().next().location().deviceId();
 
-        //search were the PID for source/destination endpoints
-        for(Map.Entry<PIDName, List<Host>> pid : pids.entrySet()) {
+        double cost = 0;
 
-            for (Host host : pid.getValue()) {
+        if(!sourceDev.equals(destDev)) {
+            Set<Path> paths = topologyService.getPaths(
+                    topologyService.currentTopology(),
+                    sourceDev,
+                    destDev
+            );
 
-                String hostIP = host.ipAddresses().iterator().next().toString();
-
-                if (sourceIP.equals(hostIP))
-                    sourcePID = pid.getKey();
-
-                if (destIP.equals(hostIP))
-                    destPID = pid.getKey();
+            if (paths.size() > 0) {
+                for (Path p : paths) {
+                    if (cost == 0 || p.cost() < cost) {
+                        cost = p.cost() + 1;
+                    }
+                }
             }
-
+        }else{
+            cost = 1;
         }
 
-        //Separated for readability
-
-        //if source or dest PIDs were not found
-        if(sourcePID == null || destPID == null)
-            return new Integer(-1);
-
-        //if source is not in the cost map
-        if(!costs.containsKey(sourcePID))
-            return new Integer(-1);
-
-        //if no cost from source to destination
-        if(!costs.get(sourcePID).getDstCosts().containsKey(destPID))
-            return new Integer(-1);
+        /*
+        *  PID1[ h1 ---- x ] ------ x ------- [ x ---- h2 ]PID2
+        *          r1       r2        r3
+        *
+        * by def, path.cost() from r1 to r3 is 2,
+        * then it counts as traversed links
+        *
+        * add 1 to cost to get the hopcount from
+        * hosts of each pid.
+        * subtract 1 to cost ot get the hopcount
+        * taking the ref switches as units of traffic source
+        *
+        * */
 
         //if we reach here, there should be a cost to return
-        return new Integer(costs.get(sourcePID).getDstCosts().get(destPID));
-
+        return new Integer((int)cost);
     }
 
 }

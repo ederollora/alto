@@ -8,7 +8,9 @@ import dtu.alto.endpoint.AddressType;
 import dtu.alto.endpoint.EndpointAddr;
 import dtu.alto.pid.PIDName;
 import org.onosproject.net.Host;
+import org.onosproject.net.HostId;
 import org.onosproject.net.device.DeviceService;
+import org.onosproject.net.host.HostAdminService;
 import org.slf4j.Logger;
 
 import java.io.Serializable;
@@ -39,15 +41,14 @@ public class NetworkMapData implements Serializable {
         pidList = new LinkedHashMap<>();
     }
 
-    public NetworkMapData(Iterable<Host> hosts,
-                          Logger log,
-                          DeviceService deviceService){
+    public NetworkMapData(Iterable<Host> hosts, Logger log,
+                          DeviceService deviceService, HostAdminService hostAdminService){
 
         this();
 
         for (Host host: hosts) {
             try {
-                this.insertHost(host, log, deviceService);
+                this.insertHost(host, log, deviceService, hostAdminService);
             } catch (UnknownHostException e) {
                 //String ip = host.ipAddresses().iterator().next().getIp4Address().toString();
                 log.error(e.getMessage() + ": IP from host [" + host.id() + "] with MAC [" + host.mac() + "] is unknown.");
@@ -96,9 +97,8 @@ public class NetworkMapData implements Serializable {
         this.pidList = pidList;
     }
 
-    public void insertHost(Host host,
-                            Logger log,
-                             DeviceService deviceService) throws UnknownHostException {
+    public void insertHost(Host host, Logger log, DeviceService deviceService,
+                           HostAdminService hostAdminService) throws UnknownHostException {
 
         Boolean found = false;
 
@@ -153,7 +153,8 @@ public class NetworkMapData implements Serializable {
                 data.put(pid, gr);
 
             }else{
-                log.info("Host with id ["+host.id()+"] and mac ["+host.mac()+"] has unknown IP");
+                hostAdminService.removeHost(host.id());
+                log.info("Host with id ["+host.id()+"]. Removing the \"false\" host from ONOS");
             }
         }
         //log.info("Created PIDs: "+String.valueOf(createdPIDs));

@@ -18,6 +18,7 @@ import org.onlab.packet.IpAddress;
 import org.onosproject.net.Host;
 
 import org.onosproject.net.device.DeviceService;
+import org.onosproject.net.host.HostAdminService;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
@@ -51,6 +52,9 @@ public class ALTOManager implements ALTOService {
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected TopologyService topologyService;
 
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected HostAdminService hostAdminService;
+
     protected LoadCheckService loadCheckService;
 
     private HostListener hostListener = new InnerHostListener();
@@ -64,7 +68,7 @@ public class ALTOManager implements ALTOService {
 
     private List<VersionTag> latestVtags = new ArrayList<>();
 
-    private List<CostType> costTypes = new ArrayList<>();
+    private SupportedCostTypes costTypes;
 
     private ServerReport cdnServerStats = new ServerReport();
 
@@ -72,7 +76,7 @@ public class ALTOManager implements ALTOService {
     @Activate
     public void activate() {
 
-        costTypes.add(new CostType("numerical", "hopcount"));
+        costTypes = new SupportedCostTypes();
 
         buildMaps(); //It also builds the cost map
 
@@ -161,7 +165,6 @@ public class ALTOManager implements ALTOService {
         return listIps;
     }
 
-
     private void buildNetworkMap(){
 
         geninforesmap++;
@@ -170,7 +173,7 @@ public class ALTOManager implements ALTOService {
 
         Iterable<Host> hosts = hostService.getHosts();
 
-        infoResNetworkMap = new InfoResourceNetworkMap(hosts, log, deviceService);
+        infoResNetworkMap = new InfoResourceNetworkMap(hosts, log, deviceService, hostAdminService);
 
         //addVtagToList(infoResNetworkMap.VersionTag());
 
@@ -187,14 +190,14 @@ public class ALTOManager implements ALTOService {
 
         );
 
-        for (CostType cType : costTypes) {
-            if (cType.equals(SupportedCostTypes.NUM_HOP_COUNT)) {
+        for(CostType cType : costTypes.getSupportTypes()){
+            if (cType.equals(SupportedCostTypes.NUM_ROUTING_COST)) {
 
                 Map<CostType, CostMapData> costSet = infoResCostMap.getSetOfCostMaps();
 
                 costSet.put(
                     cType,
-                    CostMapData.numHopCountCostMap(
+                    CostMapData.numRoutingCostMap(
                             infoResNetworkMap.getPIDs(),
                             log,
                             topologyService)
