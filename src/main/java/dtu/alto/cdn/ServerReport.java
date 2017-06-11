@@ -17,6 +17,8 @@ public class ServerReport implements Serializable {
     @JsonProperty("timestamp")
     private Long timeStamp = null;
 
+
+
     public ServerReport() {
         serverStats = new HashMap<>();
         timeStamp = Integer.toUnsignedLong(0);

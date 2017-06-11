@@ -11,8 +11,8 @@ public class PortStats {
     private long firstSample;
 
     private int numSamples;
-    private float avgRate;
-    private float rate;
+    private double avgRate;
+    private double rate;
     private long lastTimestamp;
     private long lastSample; // bytes received in the switch port
 
@@ -35,19 +35,19 @@ public class PortStats {
         this.numSamples = numSamples;
     }
 
-    public float getAvgRate() {
+    public double getAvgRate() {
         return avgRate;
     }
 
-    public void setAvgRate(float avgRate) {
+    public void setAvgRate(double avgRate) {
         this.avgRate = avgRate;
     }
 
-    public float getRate() {
+    public double getRate() {
         return rate;
     }
 
-    public void setRate(float rate) {
+    public void setRate(double rate) {
         this.rate = rate;
     }
 

@@ -24,6 +24,7 @@ import dtu.alto.base.ResponseMeta;
 import dtu.alto.base.SupportedCostTypes;
 import dtu.alto.cdn.AckMessage;
 import dtu.alto.cdn.ServerReport;
+import dtu.alto.core.LoadCheckService;
 import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
 import dtu.alto.endpointcost.ReqEndpointCostMap;
@@ -162,7 +163,7 @@ public class AppWebResource extends AbstractWebResource {
 
         ALTOService altoService = get(ALTOService.class);
 
-        String mode = md;
+        String mode = "";
 
         if (md.equals("num")) mode = "numerical";
         if (md.equals("ord")) mode = "ordinal";
@@ -282,7 +283,7 @@ public class AppWebResource extends AbstractWebResource {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         ReqEndpointCostMap reqEndpointCostMap = null;
-        InfoResourceEndpointCostMap infoResCostMap;
+        InfoResourceEndpointCostMap infoResEndCostMap;
 
         try {
             reqEndpointCostMap = mapper.readValue(body, ReqEndpointCostMap.class);
@@ -309,28 +310,17 @@ public class AppWebResource extends AbstractWebResource {
         TopologyService topologyService = get(TopologyService.class);
         HostService hostService = get(HostService.class);
 
-        InfoResourceCostMap costMap = altoService.getCostMap();
-        CostMapData cData;
 
-
-        if(costMap.getSetOfCostMaps().containsKey(reqEndpointCostMap.getCostType()))
-            cData = costMap.getSetOfCostMaps().get(reqEndpointCostMap.getCostType());
-        else
-            cData = costMap.getSetOfCostMaps().get(new CostType("numerical", "routingcost"));
-
-
-        Map<PIDName,List<Host>> pidList = altoService.getPIDs();
-
-        infoResCostMap = new InfoResourceEndpointCostMap();
+        infoResEndCostMap = new InfoResourceEndpointCostMap();
         ResponseMeta rMeta = new ResponseMeta(reqEndpointCostMap.getCostType());
-        infoResCostMap.setMeta(rMeta);
+        infoResEndCostMap.setMeta(rMeta);
 
-        infoResCostMap.setCosts(reqEndpointCostMap, rMeta, hostService, topologyService);
+        infoResEndCostMap.setCosts(reqEndpointCostMap, rMeta, hostService, topologyService);
 
         String json = null;
 
         try {
-            json = mapper.writeValueAsString(infoResCostMap);
+            json = mapper.writeValueAsString(infoResEndCostMap);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -343,16 +333,63 @@ public class AppWebResource extends AbstractWebResource {
     /* NEW PART */
 
     @POST
-    @Path("rank/weighted")
+    @Path("endpointcost/weighted")
     @Consumes(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOSTPARAMS)
     @Produces({ALTOMediaType.APPLICATION_ALTO_COSTMAP,
             ALTOMediaType.APPLICATION_ALTO_ERROR})
     public Response returnRankedEndpoints(String body) {
 
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+        ReqEndpointCostMap reqEndpointCostMap = null;
+        InfoResourceEndpointCostMap infoResEndCostMap;
+
+        try {
+            reqEndpointCostMap = mapper.readValue(body, ReqEndpointCostMap.class);
+        } catch (JsonParseException | JsonMappingException syntaxEx) {
+
+            //Either json structure is incorrect or field not present in POJO
+            //right now unknown properties do not raise an exception see: mapper.disable() ...
+
+            return JSONParseException(
+                    syntaxEx.getLocation().getColumnNr(),
+                    syntaxEx.getLocation().getLineNr(),
+                    syntaxEx.getLocation().getCharOffset(),
+                    body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
+            );
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if(reqEndpointCostMap.getCostType() == null)
+            return missingCostType();
+
+        ALTOService altoService = get(ALTOService.class);
+        TopologyService topologyService = get(TopologyService.class);
+        HostService hostService = get(HostService.class);
 
 
+        infoResEndCostMap = new InfoResourceEndpointCostMap();
+        ResponseMeta rMeta = new ResponseMeta(reqEndpointCostMap.getCostType());
+        infoResEndCostMap.setMeta(rMeta);
 
-        return ok(body).build();
+        infoResEndCostMap.setCosts(reqEndpointCostMap, rMeta, hostService, topologyService);
+
+        altoService.getRankedEndpoints(infoResEndCostMap);
+
+        String json = null;
+
+        try {
+            json = mapper.writeValueAsString(infoResEndCostMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return ok(json)
+                .type(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOST)
+                .build();
     }
 
     @POST
@@ -366,7 +403,7 @@ public class AppWebResource extends AbstractWebResource {
 
         ALTOService altoService = get(ALTOService.class);
 
-        log.info("Content servers: "+altoService.getContentServers().size());
+        //log.info("Content servers: "+altoService.getContentServers().size());
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -391,8 +428,8 @@ public class AppWebResource extends AbstractWebResource {
             e.printStackTrace();
         }
 
-        log.info("ServerReport size: "+serverReport.getServerStats().size());
-        log.info("Server Report: "+serverReport.toString());
+        //log.info("ServerReport size: "+serverReport.getServerStats().size());
+        //log.info("Server Report: "+serverReport.toString());
 
         altoService.updateServerReport(serverReport);
 

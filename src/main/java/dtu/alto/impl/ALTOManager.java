@@ -8,11 +8,17 @@ import dtu.alto.cdn.ServerStatistics;
 import dtu.alto.core.LoadCheckService;
 import dtu.alto.cost.CostMapData;
 import dtu.alto.cost.CostType;
+import dtu.alto.endpoint.TypedEndpointAddr;
+import dtu.alto.endpointcost.EndpointDstCosts;
+import dtu.alto.endpointcost.WeightedEndpointCostMapData;
+import dtu.alto.endpointcost.WeightedEndpointDstCosts;
 import dtu.alto.linkload.PortStats;
 import dtu.alto.resources.InfoResourceCostMap;
+import dtu.alto.resources.InfoResourceEndpointCostMap;
 import dtu.alto.resources.InfoResourceNetworkMap;
 import dtu.alto.pid.PIDName;
 import dtu.alto.core.ALTOService;
+import dtu.alto.resources.InfoResourceWeightedEndpointCostMap;
 import org.apache.felix.scr.annotations.*;
 import org.onlab.packet.IpAddress;
 import org.onosproject.net.Host;
@@ -126,32 +132,53 @@ public class ALTOManager implements ALTOService {
     }
 
     @Override
-    public Map<IpAddress, RankedValues> getRankedEndpoints(List<IpAddress> endpoints) {
-
-        HashMap<IpAddress, PortStats> latestLoad = loadCheckService.getLoadReport();
-
-        Integer maxbw = null, minbw = null;
-        Integer mindelay, maxdelay;
-        Integer minload, maxload;
-        Integer minhop, maxhop;
-
-        for(IpAddress ip : endpoints){
-
-            /*for (ServerStatistics stats : cdnServerStats.getServerStats()){
-
-
-
-
-            }*/
-
-        }
-        return null;
+    public ServerReport getServerReport() {
+        return this.cdnServerStats;
     }
 
     @Override
-    public List<IpAddress> getContentServers() {
+    public void getRankedEndpoints(InfoResourceEndpointCostMap eCostMap) {
 
-        List<IpAddress> listIps = new ArrayList<>();
+        HashMap<TypedEndpointAddr, PortStats> loadReport = loadCheckService.getLoadReport();
+
+        HashMap<TypedEndpointAddr, ServerStatistics> serverStats = getServerReport().getServerStats();
+
+        SortedMap<TypedEndpointAddr, EndpointDstCosts> endPointCosts = eCostMap.getEndpointCostMap().getEndPointCostMap();
+
+        InfoResourceWeightedEndpointCostMap weCostMap = new InfoResourceWeightedEndpointCostMap();
+        WeightedEndpointCostMapData weCostMapData = weCostMap.getEndpointCostMap();
+        SortedMap<TypedEndpointAddr, WeightedEndpointDstCosts> weDstCosts =  weCostMapData.getWeightedEndPointCostMap();
+
+
+        double weightBw = 0.4, weightLoad = 0.4, weightHop = 0.2;
+
+        for(TypedEndpointAddr sourceaddr : endPointCosts.keySet()){
+
+            weDstCosts.put(sourceaddr, new WeightedEndpointDstCosts());
+
+            for (Map.Entry<TypedEndpointAddr, ServerStatistics> server : serverStats.entrySet()){
+
+
+                SortedMap<TypedEndpointAddr, Double> weightedDstCosts = weDstCosts.get(sourceaddr).getDstCosts();
+
+                PortStats serverPortStats = loadReport.get(server.getKey());
+
+                double finalcost = ((1 - (server.getValue().getNormalizedCapacity())) * weightBw) +
+                                   (endPointCosts.get(sourceaddr).getNormalizedCosts().get(server.getKey()) * weightHop) +
+                                   (server.getValue().getLoad() * weightLoad);
+
+                weightedDstCosts.put(server.getKey(), finalcost);
+            }
+        }
+
+        WeightedEndpointCostMapData.createOrdinalMap(weCostMapData, eCostMap.getEndpointCostMap());
+
+    }
+
+    @Override
+    public List<TypedEndpointAddr> getContentServers() {
+
+        List<TypedEndpointAddr> listIps = new ArrayList<>();
 
         //log.info("Size of servers: "+cdnServerStats.getServerStats().size());
 
@@ -195,6 +222,9 @@ public class ALTOManager implements ALTOService {
 
                 Map<CostType, CostMapData> costSet = infoResCostMap.getSetOfCostMaps();
 
+                CostMapData nRoutingcostData = CostMapData.numRoutingCostMap(
+                        infoResNetworkMap.getPIDs(), log, topologyService);
+
                 costSet.put(
                     cType,
                     CostMapData.numRoutingCostMap(
@@ -202,7 +232,27 @@ public class ALTOManager implements ALTOService {
                             log,
                             topologyService)
                 );
+
+                costSet.put(cType, nRoutingcostData);
+
+                CostType ordCostType = new CostType("ordinal", cType.getCostMetric());
+
+                costSet.put(ordCostType, CostMapData.createOrdinalMap(nRoutingcostData));
+
+            }else if(cType.equals(SupportedCostTypes.NUM_HOPCOUNT)) {
+
+                Map<CostType, CostMapData> costSet = infoResCostMap.getSetOfCostMaps();
+
+                CostMapData nHopCountData = CostMapData.hopCountCostMap(
+                        infoResNetworkMap.getPIDs(), log, topologyService);
+
+                costSet.put(cType, nHopCountData);
+
+                CostType ordCostType = new CostType("ordinal", cType.getCostMetric());
+
+                costSet.put(ordCostType, CostMapData.createOrdinalMap(nHopCountData));
             }
+
         }
 
     }
@@ -227,6 +277,15 @@ public class ALTOManager implements ALTOService {
             latestVtags.add(i-1, latestVtags.get(i));
 
         latestVtags.remove(latestVtags.size()-1);
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 
     private class InnerHostListener implements HostListener {

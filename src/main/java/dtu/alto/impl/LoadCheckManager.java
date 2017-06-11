@@ -1,5 +1,6 @@
 package dtu.alto.impl;
 
+import dtu.alto.endpoint.TypedEndpointAddr;
 import dtu.alto.linkload.PortStats;
 import dtu.alto.core.ALTOService;
 import dtu.alto.core.LoadCheckService;
@@ -47,7 +48,10 @@ public class LoadCheckManager implements LoadCheckService {
     protected ALTOService altoService;
 
 
-    HashMap<IpAddress, PortStats> serverStatistics;
+    HashMap<TypedEndpointAddr, PortStats> serverStatistics;
+
+
+
 
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(1);
@@ -74,7 +78,7 @@ public class LoadCheckManager implements LoadCheckService {
     }
 
     @Override
-    public HashMap<IpAddress, PortStats> getLoadReport() {
+    public HashMap<TypedEndpointAddr, PortStats> getLoadReport() {
 
         return serverStatistics;
     }
@@ -82,9 +86,11 @@ public class LoadCheckManager implements LoadCheckService {
 
     public void getStats() {
 
-        List<IpAddress> cdnServers = altoService.getContentServers();
+        List<TypedEndpointAddr> cdnServers = altoService.getContentServers();
 
-        for (IpAddress ip : cdnServers) {
+        log.info("We have "+cdnServers.size()+" servers to monitor");
+
+        for (TypedEndpointAddr ip : cdnServers) {
 
             PortStats serverStats;
 
@@ -95,7 +101,15 @@ public class LoadCheckManager implements LoadCheckService {
 
             serverStats = serverStatistics.get(ip);
 
-            Set<Host> possibleHosts = hostService.getHostsByIp(ip);
+            IpAddress ipaddr = IpAddress.valueOf(ip.getEndpointAddr().getAddress());
+
+            Set<Host> possibleHosts = hostService.getHostsByIp(ipaddr);
+
+            if(possibleHosts.isEmpty()){
+                log.info("No hosts to observe");
+                return;
+            }
+
             Host host = possibleHosts.iterator().next();
             DeviceId attachedDeviceId = host.location().deviceId();
             PortNumber attachedDevicePort = host.location().port();
@@ -105,7 +119,7 @@ public class LoadCheckManager implements LoadCheckService {
             if(latestStats == null)
                 return;
 
-            long latestTimestamp = System.currentTimeMillis() % 1000;
+            long latestTimestamp = System.currentTimeMillis();
             long recBytes = latestStats.bytesReceived();
             int lastNumSamples = serverStats.getNumSamples();
 
@@ -116,18 +130,20 @@ public class LoadCheckManager implements LoadCheckService {
                 serverStats.setLastTimestamp(latestTimestamp);
                 serverStats.setNumSamples(lastNumSamples+1);
                 return;
+
             } else{
 
                 long timeDiff = latestTimestamp - serverStats.getLastTimestamp();
+                //log.info("Bytes timediff1 = "+String.valueOf(latestTimestamp)+" - "+String.valueOf(serverStats.getLastTimestamp())+" = "+timeDiff));
                 long byteDiff = recBytes - serverStats.getLastSample();
-                float latestRate = (byteDiff / timeDiff) / 1000;
+                //log.info("Transferred bytes [ "+byteDiff+" ] = "+String.valueOf(recBytes)+" - "+String.valueOf(serverStats.getLastSample()));
+                double latestRate = (((double)byteDiff / timeDiff) * 1000) * 8;
 
                 serverStats.setRate(latestRate);
 
                 timeDiff = latestTimestamp - serverStats.getFirstTimestamp();
                 byteDiff = recBytes - serverStats.getFirstSample();
-                float newAvg = (byteDiff / timeDiff) / 1000;
-                //float newAvg = ((lastNumSamples * avgR) + latestRate) / (lastNumSamples + 1);
+                double newAvg = (((double)byteDiff / timeDiff) * 1000) * 8;
 
                 serverStats.setAvgRate(newAvg);
                 serverStats.setLastSample(recBytes);
@@ -136,11 +152,13 @@ public class LoadCheckManager implements LoadCheckService {
             }
 
             log.info("Stats of server: "+ip);
-            log.info("Samples of that server: "+serverStats.getNumSamples());
-            log.info("Latest measured received bytes:"+serverStats.getLastSample());
-            if(serverStats.getNumSamples() > 1)
-                log.info("Rate: "+serverStats.getRate());
-                log.info("AvgRate: "+serverStats.getAvgRate());
+            //log.info("Samples of that server: "+serverStats.getNumSamples());
+            //log.info("Latest measured received bytes:"+serverStats.getLastSample());
+            if(serverStats.getNumSamples() > 1) {
+                double Mbitspersecond = serverStats.getRate() / 1e6;
+                log.info("Rate: " + String.format("%.2f", Mbitspersecond));
+                //log.info("AvgRate: " + String.valueOf(serverStats.getAvgRate()));
+            }
         }
     }
 }

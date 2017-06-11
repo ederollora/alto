@@ -1,6 +1,7 @@
 package dtu.alto.cdn;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dtu.alto.endpoint.TypedEndpointAddr;
 import org.onlab.packet.IpAddress;
 
 import java.io.Serializable;
@@ -12,13 +13,16 @@ public class ServerStatistics implements Serializable {
 
 
     @JsonProperty("ip-address")
-    private IpAddress ipAddress = null;
+    private TypedEndpointAddr ipAddress = null;
 
     @JsonProperty("served-requests")
     private Integer servedRequests  = null;
 
     @JsonProperty("load")
-    private Float load = null;
+    private Double load = null;
+
+    @JsonProperty("normLoad")
+    private Double normalizerLoad = null;
 
     @JsonProperty("active-clients")
     private Integer activeClients = null;
@@ -26,23 +30,29 @@ public class ServerStatistics implements Serializable {
     @JsonProperty("uplink-capacity") // bytes/s
     private Integer uplinkCapacity = null;
 
+    @JsonProperty("normCapacity")
+    private Double normalizedCapacity = null;
+
     @JsonProperty("delay")
-    private Float delay = null;
+    private Double delay = null;
+
+    @JsonProperty("normDelay")
+    private Double normalizedDelay = null;
 
     @JsonProperty("timestamp")
-    private Long statTimestapm = null;
+    private Long statTimestamp = null;
 
     public ServerStatistics() {
 
     }
 
     @JsonProperty("ip-address")
-    public IpAddress getIpAddress() {
+    public TypedEndpointAddr getIpAddress() {
         return ipAddress;
     }
 
     @JsonProperty("ip-address")
-    public void setIpAddress(IpAddress ipAddress) {
+    public void setIpAddress(TypedEndpointAddr ipAddress) {
         this.ipAddress = ipAddress;
     }
 
@@ -57,12 +67,12 @@ public class ServerStatistics implements Serializable {
     }
 
     @JsonProperty("load")
-    public Float getLoad() {
+    public Double getLoad() {
         return load;
     }
 
     @JsonProperty("load")
-    public void setLoad(Float load) {
+    public void setLoad(Double load) {
         this.load = load;
     }
 
@@ -87,22 +97,52 @@ public class ServerStatistics implements Serializable {
     }
 
     @JsonProperty("delay")
-    public Float getDelay() {
+    public Double getDelay() {
         return delay;
     }
 
     @JsonProperty("delay")
-    public void setDelay(Float delay) {
+    public void setDelay(Double delay) {
         this.delay = delay;
     }
 
     @JsonProperty("timestamp")
-    public Long getStatTimestapm() {
-        return statTimestapm;
+    public Long getStatTimestamp() {
+        return statTimestamp;
     }
 
     @JsonProperty("timestamp")
-    public void setStatTimestapm(Long statTimestapm) {
-        this.statTimestapm = statTimestapm;
+    public void setStatTimestamp(Long statTimestamp) {
+        this.statTimestamp = statTimestamp;
+    }
+
+    @JsonProperty("normLoad")
+    public Double getNormalizerLoad() {
+        return normalizerLoad;
+    }
+
+    @JsonProperty("normLoad")
+    public void setNormalizerLoad(Double normalizerLoad) {
+        this.normalizerLoad = normalizerLoad;
+    }
+
+    @JsonProperty("normCapacity")
+    public Double getNormalizedCapacity() {
+        return normalizedCapacity;
+    }
+
+    @JsonProperty("normCapacity")
+    public void setNormalizedCapacity(Double normalizedCapacity) {
+        this.normalizedCapacity = normalizedCapacity;
+    }
+
+    @JsonProperty("normDelay")
+    public Double getNormalizedDelay() {
+        return normalizedDelay;
+    }
+
+    @JsonProperty("normDelay")
+    public void setNormalizedDelay(Double normalizedDelay) {
+        this.normalizedDelay = normalizedDelay;
     }
 }

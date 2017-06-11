@@ -113,7 +113,7 @@ public class NetworkMapData implements Serializable {
 
                 if(pid.getRefDevice().equals(attachDevice)){
 
-                    if(host.ipAddresses().iterator().hasNext()) {
+                    if(host.ipAddresses().size() > 0) {
 
                         String ipAddress = host.ipAddresses().iterator().next().getIp4Address().toString();
                         //String ipAddressAndMask = host.ipAddresses().iterator().next().toIpPrefix().toString();
@@ -124,8 +124,12 @@ public class NetworkMapData implements Serializable {
                         pidList.get(pid).add(host);
 
                         found = true;
+                    }else{
+                        hostAdminService.removeHost(host.id());
+                        log.info("Host with id ["+host.id()+"]. Removing the \"false\" host from ONOS");
+                        break;
                     }
-                    break;
+
                     // If host has either known or unknown IP break anyway
                     // since we found same reference device (attach point)
                 }
@@ -135,7 +139,7 @@ public class NetworkMapData implements Serializable {
 
         if(!found){
 
-            if(host.ipAddresses().iterator().hasNext()) {
+            if(host.ipAddresses().size() > 0) {
 
                 PIDName pid = new PIDName(++createdPIDs,
                                    host.location().deviceId().toString(),

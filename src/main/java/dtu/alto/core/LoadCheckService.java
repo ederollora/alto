@@ -1,8 +1,8 @@
 package dtu.alto.core;
 
 
+import dtu.alto.endpoint.TypedEndpointAddr;
 import dtu.alto.linkload.PortStats;
-import org.onlab.packet.IpAddress;
 
 import java.util.HashMap;
 
@@ -11,6 +11,6 @@ import java.util.HashMap;
  */
 public interface LoadCheckService {
 
-    HashMap<IpAddress, PortStats> getLoadReport();
+    HashMap<TypedEndpointAddr, PortStats> getLoadReport();
 
 }

@@ -2,6 +2,7 @@ package dtu.alto.endpointcost;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dtu.alto.endpoint.TypedEndpointAddr;
 
 import java.util.SortedMap;
@@ -15,6 +16,9 @@ import java.util.TreeMap;
 public class EndpointDstCosts {
 
     SortedMap<TypedEndpointAddr, Integer> dstCosts = null;
+
+    @JsonIgnore
+    SortedMap<TypedEndpointAddr, Double> normalized = null;
 
     public EndpointDstCosts(){
         this.dstCosts = new TreeMap<>();
@@ -30,6 +34,12 @@ public class EndpointDstCosts {
         this.dstCosts = dstCosts;
     }
 
+    public SortedMap<TypedEndpointAddr, Double> getNormalizedCosts() {
+        return normalized;
+    }
 
+    public void setNormalizedCosts(SortedMap<TypedEndpointAddr, Double> normalized) {
+        this.normalized = normalized;
+    }
 }
 

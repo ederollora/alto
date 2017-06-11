@@ -94,7 +94,7 @@ public class InfoResourceCostMap extends ResponseEntityBase {
 
         // cost type filtering
         if(filCostMap.getCostType() != null)
-            this.setCostMap(this.getSetOfCostMaps().get(filCostMap.getCostType()));
+            this.setCostMap(this.getSetOfCostMaps().get(new CostType("numerical", filCostMap.getCostType().getCostMetric())));
 
         // source/destination pid filtering
         if(filCostMap.getPids() != null){
@@ -157,6 +157,11 @@ public class InfoResourceCostMap extends ResponseEntityBase {
                         it.remove();
                 }
             }
+        }
+
+        if(filCostMap.getCostType().getCostMode().equals("ordinal")){
+            CostMapData cmd = CostMapData.createOrdinalMap(this.getCostMap());
+            this.costMap = cmd;
         }
     }
 

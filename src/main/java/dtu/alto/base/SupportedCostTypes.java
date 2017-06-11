@@ -12,13 +12,18 @@ public class SupportedCostTypes {
 
     public static final CostType NUM_ROUTING_COST = new CostType("numerical", "routingcost");
 
+    public static final CostType NUM_HOPCOUNT = new CostType("numerical", "hopcount");
+
     public static final CostType ORDINAL_ROUTING_COST = new CostType("ordinal", "routingcost");
+
+    public static final CostType ORDINAL_HOPCOUNT_COST = new CostType("ordinal", "hopcount");
 
     List<CostType> supportTypes;
 
     public SupportedCostTypes() {
         supportTypes = new ArrayList<>();
         supportTypes.add(new CostType("numerical", "routingcost"));
+        supportTypes.add(new CostType("numerical", "hopcount"));
         //supportTypes.add(new CostType("ordinal", "routingcost"));
     }
 

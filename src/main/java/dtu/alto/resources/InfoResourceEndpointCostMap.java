@@ -1,24 +1,21 @@
 package dtu.alto.resources;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import dtu.alto.base.ResponseEntityBase;
 import dtu.alto.base.ResponseMeta;
-import dtu.alto.cost.CostMapData;
-import dtu.alto.cost.DstCosts;
+import dtu.alto.cost.CostType;
 import dtu.alto.endpoint.TypedEndpointAddr;
 import dtu.alto.endpointcost.EndpointCostMapData;
 import dtu.alto.endpointcost.EndpointDstCosts;
 import dtu.alto.endpointcost.ReqEndpointCostMap;
-import dtu.alto.pid.PIDName;
 import org.onlab.packet.IpAddress;
 import org.onosproject.net.*;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.topology.TopologyService;
 
-import javax.ws.rs.core.Response;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -37,6 +34,12 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
 
     @JsonProperty("endpoint-cost-map")
     EndpointCostMapData endpointCostMap = null;
+
+    @JsonIgnore
+    int maxValue = Integer.MIN_VALUE;
+
+    @JsonIgnore
+    int minValue = Integer.MAX_VALUE;
 
     public void InfoResourceEndpointCostMap(){
         this.endpointCostMap = new EndpointCostMapData();
@@ -59,13 +62,18 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
 
         this.endpointCostMap = new EndpointCostMapData();
 
-        SortedMap<TypedEndpointAddr, EndpointDstCosts> costs = this.endpointCostMap.geteCostMap();
+        int max, min;
+
+        SortedMap<TypedEndpointAddr, EndpointDstCosts> costs = this.endpointCostMap.getEndPointCostMap();
 
         for(TypedEndpointAddr source : req.getEndpoints().getSrcs()){
 
             for(TypedEndpointAddr dest : req.getEndpoints().getDsts()){
 
-                Integer cost = returnE2ECost(hostService, source, dest, topologyService);
+                Integer cost = returnE2ECost(hostService, rMeta.getCostType(), source, dest, topologyService);
+
+                maxValue = (cost > maxValue) ? cost : maxValue;
+                minValue = (cost < minValue) ? cost : minValue;
 
                 if(cost != -1) {
 
@@ -75,15 +83,36 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
                     }
                     costs.get(source).getDstCosts().put(dest, cost);
                 }
+
             }
+
+            for(TypedEndpointAddr dest : req.getEndpoints().getDsts()) {
+                for (Map.Entry<TypedEndpointAddr, Double> wcost : costs.get(source).getNormalizedCosts().entrySet()) {
+
+                    double weightedCost;
+
+                    if(maxValue != minValue){
+                        weightedCost = (costs.get(source).getDstCosts().get(dest).doubleValue() - minValue) /
+                                        (maxValue - minValue);
+                    }else{
+                        weightedCost = 0.5;
+                    }
+
+                    costs.get(source).getNormalizedCosts().put(dest, weightedCost);
+
+                }
+            }
+
         }
 
+
+
         if(rMeta.getCostType().getCostMode().equals("ordinal"))
-            this.endpointCostMap.toOrdinal();
+            this.endpointCostMap = EndpointCostMapData.createOrdinalMap(this.endpointCostMap);
 
     }
 
-    public Integer returnE2ECost(HostService hostService,
+    public Integer returnE2ECost(HostService hostService, CostType ct,
             TypedEndpointAddr source, TypedEndpointAddr dest, TopologyService topologyService){
 
         IpAddress sourceIP = IpAddress.valueOf(source.getEndpointAddr().getAddress());
@@ -94,27 +123,33 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
 
         double cost = 0;
 
-        if(!sourceDev.equals(destDev)) {
-            Set<Path> paths = topologyService.getPaths(
-                    topologyService.currentTopology(),
-                    sourceDev,
-                    destDev
-            );
+        Set<Path> paths = topologyService.getPaths(
+                topologyService.currentTopology(),
+                sourceDev,
+                destDev
+        );
 
-            if (paths.size() > 0) {
-                for (Path p : paths) {
-                    if (cost == 0 || p.cost() < cost) {
-                        cost = p.cost() + 1;
-                    }
+        if (paths.size() > 0) {
+            for (Path p : paths) {
+                if (cost == 0 || p.cost() < cost) {
+                    cost = p.cost();
                 }
             }
-        }else{
-            cost = 1;
         }
 
+        int finalcost = (ct.getCostMetric().equals("hopcount")) ? (int)cost+1 : (int)cost+2;
+
+        return finalcost;
+
         /*
-        *  PID1[ h1 ---- x ] ------ x ------- [ x ---- h2 ]PID2
-        *          r1       r2        r3
+        *                                               __        __
+        *                                               |            |
+        *                                               |    |--- h2 |
+        *  PID1 -> [ h1 -- ] -- x ------ x ------- x -- | -- |--- h3 | <- PID2
+        *                     r1       r2        r3     |    |--- h4 |
+        *                                               |__        __|
+        *
+        *
         *
         * by def, path.cost() from r1 to r3 is 2,
         * then it counts as traversed links
@@ -127,7 +162,5 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
         * */
 
         //if we reach here, there should be a cost to return
-        return new Integer((int)cost);
     }
-
 }
