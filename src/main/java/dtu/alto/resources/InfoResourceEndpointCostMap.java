@@ -87,20 +87,18 @@ public class InfoResourceEndpointCostMap extends ResponseEntityBase {
             }
 
             for(TypedEndpointAddr dest : req.getEndpoints().getDsts()) {
-                for (Map.Entry<TypedEndpointAddr, Double> wcost : costs.get(source).getNormalizedCosts().entrySet()) {
 
-                    double weightedCost;
+                double weightedCost;
 
-                    if(maxValue != minValue){
-                        weightedCost = (costs.get(source).getDstCosts().get(dest).doubleValue() - minValue) /
-                                        (maxValue - minValue);
-                    }else{
-                        weightedCost = 0.5;
-                    }
-
-                    costs.get(source).getNormalizedCosts().put(dest, weightedCost);
-
+                if(maxValue != minValue){
+                    weightedCost = (costs.get(source).getDstCosts().get(dest).doubleValue() - minValue) /
+                                    (maxValue - minValue);
+                }else{
+                    weightedCost = 0.5;
                 }
+
+                costs.get(source).getNormalizedCosts().put(dest, weightedCost);
+
             }
 
         }

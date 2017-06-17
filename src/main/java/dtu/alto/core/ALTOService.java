@@ -1,14 +1,12 @@
 package dtu.alto.core;
 
 import dtu.alto.base.VersionTag;
-import dtu.alto.cdn.RankedValues;
 import dtu.alto.cdn.ServerReport;
 import dtu.alto.endpoint.TypedEndpointAddr;
 import dtu.alto.resources.InfoResourceCostMap;
 import dtu.alto.resources.InfoResourceEndpointCostMap;
 import dtu.alto.resources.InfoResourceNetworkMap;
 import dtu.alto.pid.PIDName;
-import org.onlab.packet.IpAddress;
 import org.onosproject.net.Host;
 
 import java.util.List;

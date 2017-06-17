@@ -7,12 +7,10 @@ import dtu.alto.core.LoadCheckService;
 import org.apache.felix.scr.annotations.*;
 import org.onlab.packet.IpAddress;
 import org.onlab.util.SafeRecurringTask;
-import org.onosproject.incubator.net.PortStatisticsService;
 import org.onosproject.net.*;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.device.PortStatistics;
 import org.onosproject.net.host.HostService;
-import org.onosproject.net.link.LinkService;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -49,8 +47,6 @@ public class LoadCheckManager implements LoadCheckService {
 
 
     HashMap<TypedEndpointAddr, PortStats> serverStatistics;
-
-
 
 
     private final ScheduledExecutorService scheduledExecutorService =

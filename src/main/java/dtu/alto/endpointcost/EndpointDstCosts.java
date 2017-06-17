@@ -21,7 +21,9 @@ public class EndpointDstCosts {
     SortedMap<TypedEndpointAddr, Double> normalized = null;
 
     public EndpointDstCosts(){
+
         this.dstCosts = new TreeMap<>();
+        this.normalized = new TreeMap<>();
     }
 
     @JsonAnyGetter
@@ -34,10 +36,12 @@ public class EndpointDstCosts {
         this.dstCosts = dstCosts;
     }
 
+    @JsonIgnore
     public SortedMap<TypedEndpointAddr, Double> getNormalizedCosts() {
         return normalized;
     }
 
+    @JsonIgnore
     public void setNormalizedCosts(SortedMap<TypedEndpointAddr, Double> normalized) {
         this.normalized = normalized;
     }

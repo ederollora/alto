@@ -1,8 +1,8 @@
 package dtu.alto.cdn;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dtu.alto.endpoint.TypedEndpointAddr;
-import org.onlab.packet.IpAddress;
 
 import java.io.Serializable;
 
@@ -19,10 +19,7 @@ public class ServerStatistics implements Serializable {
     private Integer servedRequests  = null;
 
     @JsonProperty("load")
-    private Double load = null;
-
-    @JsonProperty("normLoad")
-    private Double normalizerLoad = null;
+    private Integer load;
 
     @JsonProperty("active-clients")
     private Integer activeClients = null;
@@ -30,17 +27,26 @@ public class ServerStatistics implements Serializable {
     @JsonProperty("uplink-capacity") // bytes/s
     private Integer uplinkCapacity = null;
 
-    @JsonProperty("normCapacity")
-    private Double normalizedCapacity = null;
-
     @JsonProperty("delay")
-    private Double delay = null;
-
-    @JsonProperty("normDelay")
-    private Double normalizedDelay = null;
+    private Integer delay;
 
     @JsonProperty("timestamp")
     private Long statTimestamp = null;
+
+    @JsonIgnore
+    private double normalizedDelay;
+
+    @JsonIgnore
+    private double normalizedCapacity;
+
+    @JsonIgnore
+    private double normalizedLoad;
+
+    @JsonIgnore
+    private double normalizedAvail;
+
+    @JsonIgnore
+    private double nextClientAvailBW;
 
     public ServerStatistics() {
 
@@ -67,12 +73,12 @@ public class ServerStatistics implements Serializable {
     }
 
     @JsonProperty("load")
-    public Double getLoad() {
+    public Integer getLoad() {
         return load;
     }
 
     @JsonProperty("load")
-    public void setLoad(Double load) {
+    public void setLoad(Integer load) {
         this.load = load;
     }
 
@@ -97,12 +103,12 @@ public class ServerStatistics implements Serializable {
     }
 
     @JsonProperty("delay")
-    public Double getDelay() {
+    public Integer getDelay() {
         return delay;
     }
 
     @JsonProperty("delay")
-    public void setDelay(Double delay) {
+    public void setDelay(Integer delay) {
         this.delay = delay;
     }
 
@@ -116,33 +122,75 @@ public class ServerStatistics implements Serializable {
         this.statTimestamp = statTimestamp;
     }
 
-    @JsonProperty("normLoad")
-    public Double getNormalizerLoad() {
-        return normalizerLoad;
+    @JsonIgnore
+    public double getNormalizerLoad() {
+        return normalizedLoad;
     }
 
-    @JsonProperty("normLoad")
-    public void setNormalizerLoad(Double normalizerLoad) {
-        this.normalizerLoad = normalizerLoad;
+    @JsonIgnore
+    public void setNormalizerLoad(double normalizerLoad) {
+        this.normalizedLoad = normalizerLoad;
     }
 
-    @JsonProperty("normCapacity")
-    public Double getNormalizedCapacity() {
+    @JsonIgnore
+    public double getNormalizedCapacity() {
         return normalizedCapacity;
     }
 
-    @JsonProperty("normCapacity")
-    public void setNormalizedCapacity(Double normalizedCapacity) {
+    @JsonIgnore
+    public void setNormalizedCapacity(double normalizedCapacity) {
         this.normalizedCapacity = normalizedCapacity;
     }
 
-    @JsonProperty("normDelay")
-    public Double getNormalizedDelay() {
+    @JsonIgnore
+    public double getNormalizedDelay() {
         return normalizedDelay;
     }
 
-    @JsonProperty("normDelay")
-    public void setNormalizedDelay(Double normalizedDelay) {
+    @JsonIgnore
+    public void setNormalizedDelay(double normalizedDelay) {
         this.normalizedDelay = normalizedDelay;
+    }
+
+    @JsonIgnore
+    public double getNormalizedLoad() {
+        return normalizedLoad;
+    }
+
+    @JsonIgnore
+    public void setNormalizedLoad(double normalizedLoad) {
+        this.normalizedLoad = normalizedLoad;
+    }
+
+    @JsonIgnore
+    public double getNormalizedAvail() {
+        return normalizedAvail;
+    }
+
+    @JsonIgnore
+    public void setNormalizedAvail(double normalizedAvail) {
+        this.normalizedAvail = normalizedAvail;
+    }
+
+    @JsonIgnore
+    public double getNextClientAvailBW() {
+        return nextClientAvailBW;
+    }
+
+    @JsonIgnore
+    public void setNextClientAvailBW(double nextClientAvailBW) {
+        this.nextClientAvailBW = nextClientAvailBW;
+    }
+
+    @JsonIgnore
+    public double getPerClientRate(){
+        return round(((double)getUplinkCapacity() / (getActiveClients()+1)),2);
+    }
+
+    private double round(double value, int places) {
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 }

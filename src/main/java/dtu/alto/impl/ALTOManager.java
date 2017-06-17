@@ -139,9 +139,9 @@ public class ALTOManager implements ALTOService {
     @Override
     public void getRankedEndpoints(InfoResourceEndpointCostMap eCostMap) {
 
-        HashMap<TypedEndpointAddr, PortStats> loadReport = loadCheckService.getLoadReport();
+        //HashMap<TypedEndpointAddr, PortStats> loadReport = loadCheckService.getLoadReport();
 
-        HashMap<TypedEndpointAddr, ServerStatistics> serverStats = getServerReport().getServerStats();
+        Map<TypedEndpointAddr, ServerStatistics> serverStats = getServerReport().getServerStats();
 
         SortedMap<TypedEndpointAddr, EndpointDstCosts> endPointCosts = eCostMap.getEndpointCostMap().getEndPointCostMap();
 
@@ -150,7 +150,7 @@ public class ALTOManager implements ALTOService {
         SortedMap<TypedEndpointAddr, WeightedEndpointDstCosts> weDstCosts =  weCostMapData.getWeightedEndPointCostMap();
 
 
-        double weightBw = 0.4, weightLoad = 0.4, weightHop = 0.2;
+        double weightBw = 0.7, weightLoad = 0.4, weightHop = 0.3;
 
         for(TypedEndpointAddr sourceaddr : endPointCosts.keySet()){
 
@@ -158,14 +158,20 @@ public class ALTOManager implements ALTOService {
 
             for (Map.Entry<TypedEndpointAddr, ServerStatistics> server : serverStats.entrySet()){
 
-
                 SortedMap<TypedEndpointAddr, Double> weightedDstCosts = weDstCosts.get(sourceaddr).getDstCosts();
 
-                PortStats serverPortStats = loadReport.get(server.getKey());
+                //PortStats serverPortStats = loadReport.get(server.getKey());
 
-                double finalcost = ((1 - (server.getValue().getNormalizedCapacity())) * weightBw) +
-                                   (endPointCosts.get(sourceaddr).getNormalizedCosts().get(server.getKey()) * weightHop) +
-                                   (server.getValue().getLoad() * weightLoad);
+                log.info("IP: "+server.getKey().getEndpointAddr().getAddress()+". Available per client: "+String.valueOf(server.getValue().getPerClientRate()));
+
+                /*double finalcost = (((double)1 - (server.getValue().getNormalizedCapacity())) * weightBw) +
+                                   (endPointCosts.get(sourceaddr).getNormalizedCosts().get(server.getKey()) * weightHop);*/
+                                   //(server.getValue().getLoad() * weightLoad);
+
+                double finalcost = (((double)1 - (server.getValue().getNormalizedAvail())) * weightBw) +
+                        (endPointCosts.get(sourceaddr).getNormalizedCosts().get(server.getKey()) * weightHop);
+
+                log.info("Finalcost of "+server.getKey().getEndpointAddr().getAddress()+". Cost: "+String.valueOf(finalcost));
 
                 weightedDstCosts.put(server.getKey(), finalcost);
             }
@@ -180,7 +186,7 @@ public class ALTOManager implements ALTOService {
 
         List<TypedEndpointAddr> listIps = new ArrayList<>();
 
-        //log.info("Size of servers: "+cdnServerStats.getServerStats().size());
+        log.info("Size of servers: "+cdnServerStats.getServerStats().size());
 
         for (ServerStatistics stats : cdnServerStats.getServerStats().values()){
 

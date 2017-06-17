@@ -36,7 +36,6 @@ import dtu.alto.error.ALTOErrorCode;
 import dtu.alto.error.ALTOErrorResponse;
 import dtu.alto.media.ALTOMediaType;
 import dtu.alto.core.ALTOService;
-import org.onosproject.net.Host;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.topology.TopologyService;
 import org.onosproject.rest.AbstractWebResource;
@@ -46,9 +45,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -333,9 +329,9 @@ public class AppWebResource extends AbstractWebResource {
     /* NEW PART */
 
     @POST
-    @Path("endpointcost/weighted")
-    @Consumes(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOSTPARAMS)
-    @Produces({ALTOMediaType.APPLICATION_ALTO_COSTMAP,
+    @Path("rank/weighted")
+    @Consumes(ALTOMediaType.APPLICATION_JSON)
+    @Produces({ALTOMediaType.APPLICATION_JSON,
             ALTOMediaType.APPLICATION_ALTO_ERROR})
     public Response returnRankedEndpoints(String body) {
 
@@ -388,7 +384,7 @@ public class AppWebResource extends AbstractWebResource {
         }
 
         return ok(json)
-                .type(ALTOMediaType.APPLICATION_ALTO_ENDPOINTCOST)
+                .type(ALTOMediaType.APPLICATION_JSON)
                 .build();
     }
 
@@ -399,7 +395,8 @@ public class AppWebResource extends AbstractWebResource {
             ALTOMediaType.APPLICATION_ALTO_ERROR})
     public Response storeServerStats(String body) throws IOException {
 
-        //log.info("Request received");
+        log.info("POST Request received from CDN controller");
+
 
         ALTOService altoService = get(ALTOService.class);
 
@@ -421,15 +418,17 @@ public class AppWebResource extends AbstractWebResource {
                     syntaxEx.getLocation().getColumnNr(),
                     syntaxEx.getLocation().getLineNr(),
                     syntaxEx.getLocation().getCharOffset(),
-                    body.charAt(Math.toIntExact(syntaxEx.getLocation().getCharOffset()))
+                    0
             );
         }
         catch (Exception e) {
             e.printStackTrace();
         }
 
-        //log.info("ServerReport size: "+serverReport.getServerStats().size());
+        log.info("ServerReport size: "+serverReport.getServerStats().size());
         //log.info("Server Report: "+serverReport.toString());
+
+        serverReport.computeNormalizedValues();
 
         altoService.updateServerReport(serverReport);
 
